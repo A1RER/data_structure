@@ -1,6 +1,15 @@
 cmake_minimum_required(VERSION 3.10)
 project(data_structure)  # 项目名称，可自定义
 
+# 强制编译器用 UTF-8 处理源码和输出字符串（汉化版也能识别）
+if(CMAKE_C_COMPILER_ID MATCHES "GNU")
+    add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)
+endif()
+
+# 添加头文件搜索路径（关键步骤）
+include_directories(include)  # 如果放在 include 文件夹下
+# 若直接放在根目录，则用 include_directories(.)
+
 # 设置 C 标准（根据需要调整，如 C99、C11）
 set(CMAKE_C_STANDARD 99)
 
@@ -28,6 +37,11 @@ add_executable(HuffmanCode_program
 add_executable(Review_program
         programReview/main.c
 )
+
+# 确保C编译器以UTF-8处理源码
+if(CMAKE_C_COMPILER_ID MATCHES "GNU")
+    add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)
+endif()
 
 # 若需要链接外部库（如网络库），针对每个可执行程序添加链接命令
 # 例如 TCP 可能需要链接 socket 库（Windows 下是 ws2_32）：

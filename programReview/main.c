@@ -1,16 +1,18 @@
 #include "stdio.h"
 #include "stdlib.h"
+#include "../utf8support.h"
+#include <windows.h>
 
 typedef struct ListNode{
     int data;
     struct ListNode *next;
 }ListNode;
 
-//´´½¨½Úµã
+//åˆ›å»ºèŠ‚ç‚¹
 ListNode* createNode(int data){
     ListNode *newNode = (ListNode*)malloc(sizeof(ListNode));
     if(newNode == NULL){
-        printf("ÄÚ´æ·ÖÅäÊ§°Ü\n");
+        printf("å†…å­˜åˆ†é…å¤±è´¥\n");
         exit(1);
     }
     newNode->data=data;
@@ -18,14 +20,14 @@ ListNode* createNode(int data){
     return newNode;
 }
 
-//±éÀúÁ´±íº¯Êı
+//éå†é“¾è¡¨å‡½æ•°
 void traverse(ListNode *head){
     if(head == NULL){
-        printf("Á´±íÎª¿Õ\n");
+        printf("é“¾è¡¨ä¸ºç©º\n");
         return;
     }
     ListNode *current = head ;
-    printf("Á´±í±éÀú½á¹û£º");
+    printf("é“¾è¡¨éå†ç»“æœï¼š");
     while (current != NULL){
         printf("%d->",current->data);
         current=current->next;
@@ -34,79 +36,79 @@ void traverse(ListNode *head){
 
 }
 
-//Í·²åº¯Êı
+//å¤´æ’å‡½æ•°
 void prepend(ListNode **head , int data){
     ListNode *newNode = createNode(data);
-    newNode->next= *head; //ĞÂ½Úµã½ÓÔ­Í·½Úµã
+    newNode->next= *head; //æ–°èŠ‚ç‚¹æ¥åŸå¤´èŠ‚ç‚¹
     *head= newNode;
 }
 
-//Î²²åº¯Êı
+//å°¾æ’å‡½æ•°
 void append(ListNode **head ,int data){
     ListNode *newNode= createNode(data);
-    //¿ÕÁ´±í
+    //ç©ºé“¾è¡¨
     if(*head == NULL){
         *head=newNode;
         return;
     }
-    //ÕÒÎ²½Úµã
+    //æ‰¾å°¾èŠ‚ç‚¹
     ListNode *last=*head;
     while(last->next!=NULL){
         last=last->next;
     }
-    last->next=newNode; //Î²½Úµã½ÓĞÂ½Úµã
+    last->next=newNode; //å°¾èŠ‚ç‚¹æ¥æ–°èŠ‚ç‚¹
 }
 
-//Ö¸¶¨Î»ÖÃ²åÈëº¯Êı
+//æŒ‡å®šä½ç½®æ’å…¥å‡½æ•°
 void insertAfter(ListNode *head,int prevData, int data){
-    //ÕÒÇ°Çı½Úµã
+    //æ‰¾å‰é©±èŠ‚ç‚¹
     ListNode *prev=head;
     while(prev != NULL && prev->data !=prevData){
         prev=prev->next;
     }
     if(prev==NULL){
-        printf("Î´ÕÒµ½Ç°Çı½Úµã%d,²åÈëÊ§°Ü",prevData);
+        printf("æœªæ‰¾åˆ°å‰é©±èŠ‚ç‚¹%d,æ’å…¥å¤±è´¥",prevData);
         return;
     }
-    //²åÈëĞÂ½Úµã
+    //æ’å…¥æ–°èŠ‚ç‚¹
     ListNode *newNode = createNode(data);
     newNode->next=prev->next;
     prev->next=newNode;
 }
 
-//É¾³ı½Úµã
+//åˆ é™¤èŠ‚ç‚¹
 void deleteNode(ListNode **head , int data){
-    //¿ÕÁ´±í
+    //ç©ºé“¾è¡¨
     if(*head==NULL){
-        printf("Á´±íÎª¿Õ£¬É¾³ıÊ§°Ü\n");
+        printf("é“¾è¡¨ä¸ºç©ºï¼Œåˆ é™¤å¤±è´¥\n");
         return;
     }
     ListNode *temp =*head;
     ListNode *prev=NULL;
 
-    //É¾³ıÍ·½Úµã
+    //åˆ é™¤å¤´èŠ‚ç‚¹
     if(temp != NULL && temp->data == data){
         *head=temp->next;
         free(temp);
         return;
     }
-    //ÕÒÄ¿±ê½ÚµãµÄÇ°Çı
+    //æ‰¾ç›®æ ‡èŠ‚ç‚¹çš„å‰é©±
     while(temp != NULL && temp->data != data){
         prev=temp;
         temp=temp->next;
     }
-    //Î´ÕÒµ½Ä¿±ê½Úµã
+    //æœªæ‰¾åˆ°ç›®æ ‡èŠ‚ç‚¹
     if(temp==NULL){
-        printf("Î´ÕÒµ½½Úµã%d£¬É¾³ıÊ§°Ü\n",data);
+        printf("æœªæ‰¾åˆ°èŠ‚ç‚¹%dï¼Œåˆ é™¤å¤±è´¥\n",data);
         return;
     }
 
-    //É¾³ıÖĞ¼ä/Î²½Úµã
+    //åˆ é™¤ä¸­é—´/å°¾èŠ‚ç‚¹
     prev->next =temp->next;
     free(temp);
 }
 
-//²éÕÒ½Úµã
+//æŸ¥æ‰¾èŠ‚ç‚¹
 int search(ListNode *head,int data){
     ListNode *current =head;
     int index=0;
@@ -120,7 +122,7 @@ int search(ListNode *head,int data){
     return -1;
 }
 
-//ÇóÁ´±í³¤¶È
+//æ±‚é“¾è¡¨é•¿åº¦
 int getLength(ListNode *head){
     int length=0;
     ListNode *current =head ;
@@ -131,76 +133,76 @@ int getLength(ListNode *head){
     return length;
 }
 
-//Ïú»ÙÁ´±í
+//é”€æ¯é“¾è¡¨
 void freeList(ListNode **head){
     ListNode *current=*head;
     ListNode *next;
     while(current!=NULL){
-        next=current->next; //±£´æÏÂÒ»¸ö½Úµã
-        free(current); //ÊÍ·Åµ±Ç°½Úµã
-        current = next; //Ö¸ÕëºóÒÆ
+        next=current->next; //ä¿å­˜ä¸‹ä¸€ä¸ªèŠ‚ç‚¹
+        free(current); //é‡Šæ”¾å½“å‰èŠ‚ç‚¹
+        current = next; //æŒ‡é’ˆåç§»
     }
-    *head =NULL; //Í·Ö¸ÕëÖÃ¿Õ
+    *head =NULL; //å¤´æŒ‡é’ˆç½®ç©º
 }
 
-//·´×ªÁ´±í
+//åè½¬é“¾è¡¨
 ListNode *reverseList(ListNode *head){
-    ListNode *prev =NULL; //Ç°Çı½Úµã£¬³õÊ¼NULL
-    ListNode *current=head; //µ±Ç°½Úµã£¬³õÊ¼ÎªÍ·½Úµã
-    ListNode *next=NULL; //ºó¼Ì½Úµã£ºÁÙÊ±±£´æ
+    ListNode *prev =NULL; //å‰é©±èŠ‚ç‚¹ï¼Œåˆå§‹NULL
+    ListNode *current=head; //å½“å‰èŠ‚ç‚¹ï¼Œåˆå§‹ä¸ºå¤´èŠ‚ç‚¹
+    ListNode *next=NULL; //åç»§èŠ‚ç‚¹ï¼šä¸´æ—¶ä¿å­˜
 
     while(current != NULL){
-        next = current->next ; //±£´æÏÂÒ»¸ö½Úµã
-        current->next =prev; //·´×ªµ±Ç°½ÚµãÖ¸Õë
-        prev=current; //Ç°ÇıºóÒÆ
-        current=next; //µ±Ç°ºóÒÆ
+        next = current->next ; //ä¿å­˜ä¸‹ä¸€ä¸ªèŠ‚ç‚¹
+        current->next =prev; //åè½¬å½“å‰èŠ‚ç‚¹æŒ‡é’ˆ
+        prev=current; //å‰é©±åç§»
+        current=next; //å½“å‰åç§»
     }
     head=prev;
     return head;
 }
 
-//²éÕÒÖĞ¼ä½Úµã
+//æŸ¥æ‰¾ä¸­é—´èŠ‚ç‚¹
 ListNode *findMiddle(ListNode *head){
     if(head == NULL){
         return NULL;
     }
 
-    //³õÊ¼»¯¿ì¡¢ÂıÖ¸Õë
-    ListNode *slow=head; //ÂıÖ¸Õë£¬Ò»´Î×ßÒ»²½
-    ListNode *fast=head; //¿ìÖ¸Õë£¬Ò»´Î×ßÁ½²½
+    //åˆå§‹åŒ–å¿«ã€æ…¢æŒ‡é’ˆ
+    ListNode *slow=head; //æ…¢æŒ‡é’ˆï¼Œä¸€æ¬¡èµ°ä¸€æ­¥
+    ListNode *fast=head; //å¿«æŒ‡é’ˆï¼Œä¸€æ¬¡èµ°ä¸¤æ­¥
 
     while(fast!=NULL && fast->next!=NULL){
-        //Ñ­»·Ìõ¼şÒâÎª£ºÖ»ÓĞ¿ìÖ¸ÕëµÄµ±Ç°½ÚµãºÍÏÂÒ»¸ö½Úµã¾ù·Ç¿Õ£¬¾ÍËµÃ÷»¹ÄÜ×ßÁ½²½¡£
+        //å¾ªç¯æ¡ä»¶æ„ä¸ºï¼šåªæœ‰å¿«æŒ‡é’ˆçš„å½“å‰èŠ‚ç‚¹å’Œä¸‹ä¸€ä¸ªèŠ‚ç‚¹å‡éç©ºï¼Œå°±è¯´æ˜è¿˜èƒ½èµ°ä¸¤æ­¥ã€‚
         slow=slow->next;
         fast=fast->next->next;
     }
-    //¿ìÖ¸Õë×ßµ½Î²µÄÊ±ºò£¬ÂıÖ¸Õë¾ÍÖ¸ÏòÁËÖĞ¼ä½Úµã
+    //å¿«æŒ‡é’ˆèµ°åˆ°å°¾çš„æ—¶å€™ï¼Œæ…¢æŒ‡é’ˆå°±æŒ‡å‘äº†ä¸­é—´èŠ‚ç‚¹
     return slow;
 }
 
-// ²éÕÒµ¹ÊıµÚk¸ö½Úµã
+// æŸ¥æ‰¾å€’æ•°ç¬¬kä¸ªèŠ‚ç‚¹
 ListNode* findKthFromEnd(ListNode *head , int k){
     if(head == NULL && k<= 0){
         return NULL;
     }
 
     /**
-     * ºËĞÄÂß¼­£º
-     * ¿ìÖ¸ÕëÏÈÌáÇ°×ßk²½£¬È»ºó¿ìÂıÖ¸ÕëÍ¬²½×ß£¬¿ìÖ¸Õëµ½Î²Ê±ÂıÖ¸Õë¼´ÎªÄ¿±ê¡£
+     * æ ¸å¿ƒé€»è¾‘ï¼š
+     * å¿«æŒ‡é’ˆå…ˆæå‰èµ°kæ­¥ï¼Œç„¶åå¿«æ…¢æŒ‡é’ˆåŒæ­¥èµ°ï¼Œå¿«æŒ‡é’ˆåˆ°å°¾æ—¶æ…¢æŒ‡é’ˆå³ä¸ºç›®æ ‡ã€‚
      */
 
     ListNode *fast=head;
     ListNode *slow=head;
 
-    //¿ìÖ¸ÕëÏÈ×ßk²½
+    //å¿«æŒ‡é’ˆå…ˆèµ°kæ­¥
     for(int i=0 ; i<k ; i++){
         if(fast == NULL){
-            return NULL; // k³¬¹ıÁËÁ´±íµÄ³¤¶È
+            return NULL; // kè¶…è¿‡äº†é“¾è¡¨çš„é•¿åº¦
         }
         fast=fast->next;
     }
 
-    //¿ìÂıÖ¸ÕëÍ¬²½×ß
+    //å¿«æ…¢æŒ‡é’ˆåŒæ­¥èµ°
     while(fast!=NULL){
         fast = fast->next;
         slow = slow->next;
@@ -209,7 +211,7 @@ ListNode* findKthFromEnd(ListNode *head , int k){
     return slow;
 }
 
-// ÅĞ¶ÏÁ´±íÖĞÊÇ·ñÓĞ»·
+// åˆ¤æ–­é“¾è¡¨ä¸­æ˜¯å¦æœ‰ç¯
 int hasCycle(ListNode *head){
     if(head == NULL || head->next ==NULL) return 0;
 
@@ -217,78 +219,78 @@ int hasCycle(ListNode *head){
     ListNode *fast=head;
 
     /**
-     * ºËĞÄÂß¼­£º
-     * ¿ìÖ¸Õë×ßÁ½²½£¬ÂıÖ¸Õë×ßÒ»²½£¬ÈôÏàÓöÔòÓĞ»·£¬·ñÔòÎŞ»·¡£
+     * æ ¸å¿ƒé€»è¾‘ï¼š
+     * å¿«æŒ‡é’ˆèµ°ä¸¤æ­¥ï¼Œæ…¢æŒ‡é’ˆèµ°ä¸€æ­¥ï¼Œè‹¥ç›¸é‡åˆ™æœ‰ç¯ï¼Œå¦åˆ™æ— ç¯ã€‚
      */
     while (slow!=fast){
-        if(fast==NULL || fast->next==NULL) return 0; //¿ìÖ¸Õëµ½Á´±íÎ²£¬ÎŞ»·
+        if(fast==NULL || fast->next==NULL) return 0; //å¿«æŒ‡é’ˆåˆ°é“¾è¡¨å°¾ï¼Œæ— ç¯
         slow=slow->next;
         fast=fast->next->next;
     }
     return 1;
 }
 
-//ºÏ²¢Á½¸öÓĞĞòÁ´±í
+//åˆå¹¶ä¸¤ä¸ªæœ‰åºé“¾è¡¨
 ListNode* mergeTwoLists(ListNode *l1, ListNode *l2){
-    //³õÊ¼»¯ÑÆ½ÚµãºÍÎ²Ö¸Õë
-    ListNode dummy; // ÑÆ½Úµã£¨Õ»ÉÏ½Úµã£¬²»ÓÃfree£©
-    ListNode *tail =&dummy; //Î²Ö¸Õë£¬Ê¼ÖÕÖ¸ÏòĞÂÁ´±íµÄ×îºóÒ»¸ö½Úµã
-    dummy.next=NULL; //ĞÂÁ´±í³õÊ¼Îª¿Õ
+    //åˆå§‹åŒ–å“‘èŠ‚ç‚¹å’Œå°¾æŒ‡é’ˆ
+    ListNode dummy; // å“‘èŠ‚ç‚¹ï¼ˆæ ˆä¸ŠèŠ‚ç‚¹ï¼Œä¸ç”¨freeï¼‰
+    ListNode *tail =&dummy; //å°¾æŒ‡é’ˆï¼Œå§‹ç»ˆæŒ‡å‘æ–°é“¾è¡¨çš„æœ€åä¸€ä¸ªèŠ‚ç‚¹
+    dummy.next=NULL; //æ–°é“¾è¡¨åˆå§‹ä¸ºç©º
 
-    //±È½Ïl1ºÍl2µÄµ±Ç°½Úµã£¬Ğ¡µÄ½ÓÈëĞÂÁ´±í
-    //Ñ­»·Ìõ¼ş£ºl1,l2¾ù²»Îª¿Õ
+    //æ¯”è¾ƒl1å’Œl2çš„å½“å‰èŠ‚ç‚¹ï¼Œå°çš„æ¥å…¥æ–°é“¾è¡¨
+    //å¾ªç¯æ¡ä»¶ï¼šl1,l2å‡ä¸ä¸ºç©º
     while(l1!=NULL&& l2!=NULL){
-        if(l1->data < l2->data){ //l1µ±Ç°½Úµã¸üĞ¡£¬Ñ¡l1
-            tail->next=l1; //°Ñl1µ±Ç°½Úµã½Óµ½ĞÂÁ´±íÎ²²¿
-            l1 = l1->next; //l1Ö¸ÏòÏÂÒ»½Úµã
+        if(l1->data < l2->data){ //l1å½“å‰èŠ‚ç‚¹æ›´å°ï¼Œé€‰l1
+            tail->next=l1; //æŠŠl1å½“å‰èŠ‚ç‚¹æ¥åˆ°æ–°é“¾è¡¨å°¾éƒ¨
+            l1 = l1->next; //l1æŒ‡å‘ä¸‹ä¸€èŠ‚ç‚¹
         } else{
-            tail->next=l2; //°Ñl2ÏÂÒ»½Úµã½Óµ½ĞÂÁ´±íÎ²²¿
-            l2=l2->next; //l2Ö¸ÕëºóÒÆ
+            tail->next=l2; //æŠŠl2ä¸‹ä¸€èŠ‚ç‚¹æ¥åˆ°æ–°é“¾è¡¨å°¾éƒ¨
+            l2=l2->next; //l2æŒ‡é’ˆåç§»
         }
-        tail = tail->next; // ĞÂÁ´±íÎ²Ö¸ÕëºóÒÆ£¨×¼±¸½ÓÏÂÒ»¸ö½Úµã£©
+        tail = tail->next; // æ–°é“¾è¡¨å°¾æŒ‡é’ˆåç§»ï¼ˆå‡†å¤‡æ¥ä¸‹ä¸€ä¸ªèŠ‚ç‚¹ï¼‰
     }
 
-    //´¦ÀíÊ£Óà½Úµã
+    //å¤„ç†å‰©ä½™èŠ‚ç‚¹
     tail->next=(l1!=NULL)?l1:l2;
 
-    //·µ»ØºÏ²¢ºóÁ´±íµÄÕæÕıÍ·½Úµã(Òà¼´ÑÆ½ÚµãµÄnext)
+    //è¿”å›åˆå¹¶åé“¾è¡¨çš„çœŸæ­£å¤´èŠ‚ç‚¹(äº¦å³å“‘èŠ‚ç‚¹çš„next)
     return dummy.next;
 }
 
 
-//²âÊÔº¯Êı£¨Õë¶ÔCreateNode£©
+//æµ‹è¯•å‡½æ•°ï¼ˆé’ˆå¯¹CreateNodeï¼‰
 //int main(){
 //    ListNode *node = createNode(10);
-//    printf("½Úµã´´½¨³É¹¦£¬Êı¾İ£º%d,next:%p\n",node->data,node->next);
+//    printf("èŠ‚ç‚¹åˆ›å»ºæˆåŠŸï¼Œæ•°æ®ï¼š%d,next:%p\n",node->data,node->next);
 //    free(node);
 //    return 0;
 //}
 
-//²âÊÔº¯Êı£ºÕë¶Ôtraverse
+//æµ‹è¯•å‡½æ•°ï¼šé’ˆå¯¹traverse
 //int main(){
-//    //¹¹½¨Á´±í£º10 20 30 NULL
+//    //æ„å»ºé“¾è¡¨ï¼š10 20 30 NULL
 //    ListNode *head = createNode(10);
 //    head ->next = createNode(20);
 //    head ->next->next= createNode(30);
-//    traverse(head);//±éÀú
+//    traverse(head);//éå†
 //
-//    //ÊÍ·ÅÄÚ´æ
+//    //é‡Šæ”¾å†…å­˜
 //    free(head->next->next);
 //    free(head->next);
 //    free(head);
 //    return 0;
 //}
 
-//²âÊÔº¯Êı£ºÕë¶Ôprepend
+//æµ‹è¯•å‡½æ•°ï¼šé’ˆå¯¹prepend
 //int main(){
-//    ListNode *head = NULL ; //¿ÕÁ´±í
+//    ListNode *head = NULL ; //ç©ºé“¾è¡¨
 //
-//    prepend(&head, 30);//Í·²å30£º30->null
-//    prepend(&head,20);//Í·²å20£»20->30->null
-//    prepend(&head,10);//Í·²å10:10->20->30->null
+//    prepend(&head, 30);//å¤´æ’30ï¼š30->null
+//    prepend(&head,20);//å¤´æ’20ï¼›20->30->null
+//    prepend(&head,10);//å¤´æ’10:10->20->30->null
 //
 //    traverse(head);
-//    //ÊÍ·ÅÄÚ´æ
+//    //é‡Šæ”¾å†…å­˜
 //    free(head->next->next);
 //    free(head->next);
 //    free(head);
@@ -296,36 +298,36 @@ ListNode* mergeTwoLists(ListNode *l1, ListNode *l2){
 //    return 0;
 //}
 
-//²âÊÔº¯Êı£ºÕë¶Ôappend
+//æµ‹è¯•å‡½æ•°ï¼šé’ˆå¯¹append
 //int main(){
-//    ListNode *head = NULL;  // ¿ÕÁ´±í
+//    ListNode *head = NULL;  // ç©ºé“¾è¡¨
 //
-//    append(&head, 10);      // Î²²å10 ¡ú 10¡úNULL
-//    append(&head, 20);      // Î²²å20 ¡ú 10¡ú20¡úNULL
-//    append(&head, 30);      // Î²²å30 ¡ú 10¡ú20¡ú30¡úNULL
+//    append(&head, 10);      // å°¾æ’10 â†’ 10â†’NULL
+//    append(&head, 20);      // å°¾æ’20 â†’ 10â†’20â†’NULL
+//    append(&head, 30);      // å°¾æ’30 â†’ 10â†’20â†’30â†’NULL
 //
 //    traverse(head);
 //
-//    // ÊÍ·ÅÄÚ´æ
+//    // é‡Šæ”¾å†…å­˜
 //    free(head->next->next);
 //    free(head->next);
 //    free(head);
 //    return 0;
 //}
 
-//²âÊÔº¯Êı£ºÕë¶ÔinsertAfter
+//æµ‹è¯•å‡½æ•°ï¼šé’ˆå¯¹insertAfter
 //int main(){
-//    //¹¹½¨Á´±í
+//    //æ„å»ºé“¾è¡¨
 //    ListNode *head = createNode(10);
 //    head->next= createNode(20);
 //    head->next->next= createNode(30);
 //
-//    insertAfter(head,20,25); //ÔÚ20ºóÃæ²åÈë25£¬Á´±í±äÎª10->20->25->30
+//    insertAfter(head,20,25); //åœ¨20åé¢æ’å…¥25ï¼Œé“¾è¡¨å˜ä¸º10->20->25->30
 //    traverse(head);
 //
-//    insertAfter(head,40,50); //Ç°Çı½Úµã40²»´æÔÚ£¬¹Ê²åÈëÊ§°Ü
+//    insertAfter(head,40,50); //å‰é©±èŠ‚ç‚¹40ä¸å­˜åœ¨ï¼Œæ•…æ’å…¥å¤±è´¥
 //
-//    //ÊÍ·ÅÄÚ´æ
+//    //é‡Šæ”¾å†…å­˜
 //    free(head->next->next->next);
 //    free(head->next->next);
 //    free(head->next);
@@ -333,104 +335,104 @@ ListNode* mergeTwoLists(ListNode *l1, ListNode *l2){
 //    return 0;
 //}
 
-//²âÊÔº¯Êı£ºÕë¶ÔDeleteNode
+//æµ‹è¯•å‡½æ•°ï¼šé’ˆå¯¹DeleteNode
 //int main(){
-//    //¹¹½¨Á´±í
+//    //æ„å»ºé“¾è¡¨
 //    ListNode *head= createNode(10);
 //    head->next= createNode(20);
 //    head->next->next= createNode(25);
 //    head->next->next->next=createNode(30);
 //
-//    deleteNode(&head,25); //É¾³ı25
+//    deleteNode(&head,25); //åˆ é™¤25
 //    traverse(head);
 //
 //    deleteNode(&head,40);
 //
-//    // ÊÍ·ÅÄÚ´æ
+//    // é‡Šæ”¾å†…å­˜
 //    free(head->next->next);
 //    free(head->next);
 //    free(head);
 //    return 0;
 //}
 
-//²âÊÔ£ºÕë¶Ôsearch
-// ²âÊÔ
+//æµ‹è¯•ï¼šé’ˆå¯¹search
+// æµ‹è¯•
 //int main() {
-//    // ¹¹½¨Á´±í£º10 ¡ú 20 ¡ú 30 ¡ú NULL
+//    // æ„å»ºé“¾è¡¨ï¼š10 â†’ 20 â†’ 30 â†’ NULL
 //    ListNode *head = createNode(10);
 //    head->next = createNode(20);
 //    head->next->next = createNode(30);
 //
 //    int pos1 = search(head, 20);
-//    printf("½Úµã20µÄÎ»ÖÃ£º%d\n", pos1);  // Êä³ö1
+//    printf("èŠ‚ç‚¹20çš„ä½ç½®ï¼š%d\n", pos1);  // è¾“å‡º1
 //
 //    int pos2 = search(head, 40);
-//    printf("½Úµã40µÄÎ»ÖÃ£º%d\n", pos2);  // Êä³ö-1
+//    printf("èŠ‚ç‚¹40çš„ä½ç½®ï¼š%d\n", pos2);  // è¾“å‡º-1
 //
-//    // ÊÍ·ÅÄÚ´æ
+//    // é‡Šæ”¾å†…å­˜
 //    free(head->next->next);
 //    free(head->next);
 //    free(head);
 //    return 0;
 //}
 
-//²âÊÔ£ºÕë¶ÔgetLength
-// ²âÊÔ
+//æµ‹è¯•ï¼šé’ˆå¯¹getLength
+// æµ‹è¯•
 //int main() {
-//    // ¹¹½¨Á´±í£º10 ¡ú 20 ¡ú 30 ¡ú NULL
+//    // æ„å»ºé“¾è¡¨ï¼š10 â†’ 20 â†’ 30 â†’ NULL
 //    ListNode *head = createNode(10);
 //    head->next = createNode(20);
 //    head->next->next = createNode(30);
 //
-//    printf("Á´±í³¤¶È£º%d\n", getLength(head));  // Êä³ö3
+//    printf("é“¾è¡¨é•¿åº¦ï¼š%d\n", getLength(head));  // è¾“å‡º3
 //
-//    // ¿ÕÁ´±í²âÊÔ
+//    // ç©ºé“¾è¡¨æµ‹è¯•
 //    ListNode *emptyHead = NULL;
-//    printf("¿ÕÁ´±í³¤¶È£º%d\n", getLength(emptyHead));  // Êä³ö0
+//    printf("ç©ºé“¾è¡¨é•¿åº¦ï¼š%d\n", getLength(emptyHead));  // è¾“å‡º0
 //
-//    // ÊÍ·ÅÄÚ´æ
+//    // é‡Šæ”¾å†…å­˜
 //    free(head->next->next);
 //    free(head->next);
 //    free(head);
 //    return 0;
 //}
 
-//²âÊÔ£ºÕë¶ÔÏú»Ùº¯Êı
+//æµ‹è¯•ï¼šé’ˆå¯¹é”€æ¯å‡½æ•°
 //int main() {
 //    ListNode *head = createNode(10);
 //    head->next = createNode(20);
 //    head->next->next = createNode(30);
 //
-//    printf("Ïú»ÙÇ°³¤¶È£º%d\n", getLength(head));  // Êä³ö3
+//    printf("é”€æ¯å‰é•¿åº¦ï¼š%d\n", getLength(head));  // è¾“å‡º3
 //    freeList(&head);
-//    printf("Ïú»Ùºó³¤¶È£º%d\n", getLength(head));  // Êä³ö0
+//    printf("é”€æ¯åé•¿åº¦ï¼š%d\n", getLength(head));  // è¾“å‡º0
 //
 //    return 0;
 //}
 
-//²âÊÔ£ºÕë¶Ô·´×ªº¯Êı
+//æµ‹è¯•ï¼šé’ˆå¯¹åè½¬å‡½æ•°
 //int main(){
-//    //¹¹½¨Á´±í£º
+//    //æ„å»ºé“¾è¡¨ï¼š
 //    ListNode *head = createNode(10);
 //    head->next = createNode(20);
 //    head->next->next = createNode(30);
 //
-//    printf("·´×ªÇ°£º");
+//    printf("åè½¬å‰ï¼š");
 //    traverse(head);
 //
-//    head = reverseList(head);  // ·´×ª
+//    head = reverseList(head);  // åè½¬
 //
-//    printf("·´×ªºó£º");
+//    printf("åè½¬åï¼š");
 //    traverse(head);
 //
-//    // ÊÍ·ÅÄÚ´æ
+//    // é‡Šæ”¾å†…å­˜
 //    freeList(&head);
 //    return 0;
 //}
 
-// ²âÊÔ£ºÕë¶ÔFindMiddle
+// æµ‹è¯•ï¼šé’ˆå¯¹FindMiddle
 //int main() {
-//    // ÆæÊı³¤¶ÈÁ´±í£º10¡ú20¡ú30¡ú40¡ú50¡úNULL£¨ÖĞ¼ä30£©
+//    // å¥‡æ•°é•¿åº¦é“¾è¡¨ï¼š10â†’20â†’30â†’40â†’50â†’NULLï¼ˆä¸­é—´30ï¼‰
 //    ListNode *head1 = createNode(10);
 //    head1->next = createNode(20);
 //    head1->next->next = createNode(30);
@@ -438,26 +440,26 @@ ListNode* mergeTwoLists(ListNode *l1, ListNode *l2){
 //    head1->next->next->next->next = createNode(50);
 //
 //    ListNode *mid1 = findMiddle(head1);
-//    printf("ÆæÊı³¤¶ÈÁ´±íÖĞ¼ä½Úµã£º%d\n", mid1->data);  // Êä³ö30
+//    printf("å¥‡æ•°é•¿åº¦é“¾è¡¨ä¸­é—´èŠ‚ç‚¹ï¼š%d\n", mid1->data);  // è¾“å‡º30
 //
-//    // Å¼Êı³¤¶ÈÁ´±í£º10¡ú20¡ú30¡ú40¡úNULL£¨ÖĞ¼ä30£©
+//    // å¶æ•°é•¿åº¦é“¾è¡¨ï¼š10â†’20â†’30â†’40â†’NULLï¼ˆä¸­é—´30ï¼‰
 //    ListNode *head2 = createNode(10);
 //    head2->next = createNode(20);
 //    head2->next->next = createNode(30);
 //    head2->next->next->next = createNode(40);
 //
 //    ListNode *mid2 = findMiddle(head2);
-//    printf("Å¼Êı³¤¶ÈÁ´±íÖĞ¼ä½Úµã£º%d\n", mid2->data);  // Êä³ö30
+//    printf("å¶æ•°é•¿åº¦é“¾è¡¨ä¸­é—´èŠ‚ç‚¹ï¼š%d\n", mid2->data);  // è¾“å‡º30
 //
-//    // ÊÍ·ÅÄÚ´æ
+//    // é‡Šæ”¾å†…å­˜
 //    freeList(&head1);
 //    freeList(&head2);
 //    return 0;
 //}
 
-// ²âÊÔ: Õë¶ÔFindKthFromEnd
+// æµ‹è¯•: é’ˆå¯¹FindKthFromEnd
 //int main() {
-//    // ¹¹½¨Á´±í£º10 ¡ú 20 ¡ú 30 ¡ú 40 ¡ú 50 ¡ú NULL
+//    // æ„å»ºé“¾è¡¨ï¼š10 â†’ 20 â†’ 30 â†’ 40 â†’ 50 â†’ NULL
 //    ListNode *head = createNode(10);
 //    head->next = createNode(20);
 //    head->next->next = createNode(30);
@@ -465,32 +467,32 @@ ListNode* mergeTwoLists(ListNode *l1, ListNode *l2){
 //    head->next->next->next->next = createNode(50);
 //
 //    ListNode *k1 = findKthFromEnd(head, 2);
-//    printf("µ¹ÊıµÚ2¸ö½Úµã£º%d\n", k1->data);  // Êä³ö40
+//    printf("å€’æ•°ç¬¬2ä¸ªèŠ‚ç‚¹ï¼š%d\n", k1->data);  // è¾“å‡º40
 //
 //    ListNode *k2 = findKthFromEnd(head, 5);
-//    printf("µ¹ÊıµÚ5¸ö½Úµã£º%d\n", k2->data);  // Êä³ö10
+//    printf("å€’æ•°ç¬¬5ä¸ªèŠ‚ç‚¹ï¼š%d\n", k2->data);  // è¾“å‡º10
 //
-//    // ÊÍ·ÅÄÚ´æ
+//    // é‡Šæ”¾å†…å­˜
 //    freeList(&head);
 //    return 0;
 //}
 
-// ²âÊÔ
+// æµ‹è¯•
 //int main() {
-//    // ÎŞ»·Á´±í£º10¡ú20¡ú30¡úNULL
+//    // æ— ç¯é“¾è¡¨ï¼š10â†’20â†’30â†’NULL
 //    ListNode *head1 = createNode(10);
 //    head1->next = createNode(20);
 //    head1->next->next = createNode(30);
-//    printf("ÎŞ»·Á´±í£º%d\n", hasCycle(head1));  // Êä³ö0
+//    printf("æ— ç¯é“¾è¡¨ï¼š%d\n", hasCycle(head1));  // è¾“å‡º0
 //
-//    // ÓĞ»·Á´±í£º10¡ú20¡ú30¡ú20£¨»·£©
+//    // æœ‰ç¯é“¾è¡¨ï¼š10â†’20â†’30â†’20ï¼ˆç¯ï¼‰
 //    ListNode *head2 = createNode(10);
 //    head2->next = createNode(20);
 //    head2->next->next = createNode(30);
-//    head2->next->next->next = head2->next;  // 30Ö¸Ïò20£¬ĞÎ³É»·
-//    printf("ÓĞ»·Á´±í£º%d\n", hasCycle(head2));  // Êä³ö1
+//    head2->next->next->next = head2->next;  // 30æŒ‡å‘20ï¼Œå½¢æˆç¯
+//    printf("æœ‰ç¯é“¾è¡¨ï¼š%d\n", hasCycle(head2));  // è¾“å‡º1
 //
-//    // ÊÍ·ÅÎŞ»·Á´±íÄÚ´æ£¨ÓĞ»·Á´±íĞèÊÖ¶¯ÊÍ·Å£¬±ÜÃâËÀÑ­»·£©
+//    // é‡Šæ”¾æ— ç¯é“¾è¡¨å†…å­˜ï¼ˆæœ‰ç¯é“¾è¡¨éœ€æ‰‹åŠ¨é‡Šæ”¾ï¼Œé¿å…æ­»å¾ªç¯ï¼‰
 //    freeList(&head1);
 //    free(head2->next->next);
 //    free(head2->next);
@@ -498,24 +500,25 @@ ListNode* mergeTwoLists(ListNode *l1, ListNode *l2){
 //    return 0;
 //}
 
-// ²âÊÔ Õë¶ÔmargeTwoLists
+// æµ‹è¯• é’ˆå¯¹margeTwoLists
 int main() {
-    // Á´±í1£º10¡ú30¡ú50¡úNULL
+    INIT_UTF8_CONSOLE();  // å°±åŠ è¿™ä¸€è¡Œï¼Œæ¯”æ‰‹å†™å‡½æ•°åæ›´çœäº‹
+    // é“¾è¡¨1ï¼š10â†’30â†’50â†’NULL
     ListNode *l1 = createNode(10);
     l1->next = createNode(30);
     l1->next->next = createNode(50);
 
-    // Á´±í2£º20¡ú40¡ú60¡úNULL
+    // é“¾è¡¨2ï¼š20â†’40â†’60â†’NULL
     ListNode *l2 = createNode(20);
     l2->next = createNode(40);
     l2->next->next = createNode(60);
 
-    // ºÏ²¢
+    // åˆå¹¶
     ListNode *merged = mergeTwoLists(l1, l2);
-    printf("ºÏ²¢ºóÁ´±í£º");
+    printf("åˆå¹¶åé“¾è¡¨ï¼š");
     traverse(merged);
 
-    // ÊÍ·ÅÄÚ´æ
+    // é‡Šæ”¾å†…å­˜
     freeList(&merged);
     return 0;
 }

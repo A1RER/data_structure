@@ -1,58 +1,59 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../utf8support.h"
 
-// Ğ­Òé²ãÀàĞÍÃ¶¾Ù
+// åè®®å±‚ç±»å‹æšä¸¾
 typedef enum {
-    APPLICATION_LAYER,  // Ó¦ÓÃ²ã
-    TRANSPORT_LAYER,    // ´«Êä²ã
-    NETWORK_LAYER,      // ÍøÂç²ã
-    LINK_LAYER          // Á´Â·²ã
+    APPLICATION_LAYER,  // åº”ç”¨å±‚
+    TRANSPORT_LAYER,    // ä¼ è¾“å±‚
+    NETWORK_LAYER,      // ç½‘ç»œå±‚
+    LINK_LAYER          // é“¾è·¯å±‚
 } ProtocolLayer;
 
-// Ğ­ÒéÕ»½Úµã½á¹¹
+// åè®®æ ˆèŠ‚ç‚¹ç»“æ„
 typedef struct ProtocolNode {
-    ProtocolLayer layer;    // Ğ­Òé²ãÀàĞÍ
-    char header[50];        // Ğ­ÒéÍ·ĞÅÏ¢
+    ProtocolLayer layer;    // åè®®å±‚ç±»å‹
+    char header[50];        // åè®®å¤´ä¿¡æ¯
     struct ProtocolNode* next;
 } ProtocolNode;
 
-// Êı¾İ°ü½á¹¹
+// æ•°æ®åŒ…ç»“æ„
 typedef struct DataPacket {
-    int packet_id;          // Êı¾İ°üID
-    char data[100];         // Êı¾İÄÚÈİ
-    ProtocolNode* protocol_stack; // ¹ØÁªµÄĞ­ÒéÕ»
+    int packet_id;          // æ•°æ®åŒ…ID
+    char data[100];         // æ•°æ®å†…å®¹
+    ProtocolNode* protocol_stack; // å…³è”çš„åè®®æ ˆ
     struct DataPacket* next;
 } DataPacket;
 
-// ´´½¨Ğ­Òé½Úµã
+// åˆ›å»ºåè®®èŠ‚ç‚¹
 ProtocolNode* createProtocolNode(ProtocolLayer layer, const char* header) {
     ProtocolNode* node = (ProtocolNode*)malloc(sizeof(ProtocolNode));
     if (node == NULL) {
-        printf("ÄÚ´æ·ÖÅäÊ§°Ü\n");
+        printf("å†…å­˜åˆ†é…å¤±è´¥\n");
         return NULL;
     }
     node->layer = layer;
     strncpy(node->header, header, sizeof(node->header) - 1);
-    node->header[sizeof(node->header) - 1] = '\0'; // È·±£×Ö·û´®½áÊø
+    node->header[sizeof(node->header) - 1] = '\0'; // ç¡®ä¿å­—ç¬¦ä¸²ç»“æŸ
     node->next = NULL;
     return node;
 }
 
-// ÏòĞ­ÒéÕ»Ìí¼Ó½Úµã£¨´ÓÉÏ²ãµ½ÏÂ²ã£©
+// å‘åè®®æ ˆæ·»åŠ èŠ‚ç‚¹ï¼ˆä»ä¸Šå±‚åˆ°ä¸‹å±‚ï¼‰
 void addProtocolNode(ProtocolNode** stack, ProtocolNode* newNode) {
     if (stack == NULL || newNode == NULL) return;
 
-    // ĞÂ½ÚµãÌí¼Óµ½Õ»¶¥£¨Í·²¿£©
+    // æ–°èŠ‚ç‚¹æ·»åŠ åˆ°æ ˆé¡¶ï¼ˆå¤´éƒ¨ï¼‰
     newNode->next = *stack;
     *stack = newNode;
 }
 
-// ´´½¨Êı¾İ°ü
+// åˆ›å»ºæ•°æ®åŒ…
 DataPacket* createDataPacket(int packet_id, const char* data) {
     DataPacket* packet = (DataPacket*)malloc(sizeof(DataPacket));
     if (packet == NULL) {
-        printf("ÄÚ´æ·ÖÅäÊ§°Ü\n");
+        printf("å†…å­˜åˆ†é…å¤±è´¥\n");
         return NULL;
     }
     packet->packet_id = packet_id;
@@ -63,26 +64,26 @@ DataPacket* createDataPacket(int packet_id, const char* data) {
     return packet;
 }
 
-// ´òÓ¡Ğ­Òé²ãÃû³Æ
+// æ‰“å°åè®®å±‚åç§°
 const char* getLayerName(ProtocolLayer layer) {
     switch (layer) {
-        case APPLICATION_LAYER: return "Ó¦ÓÃ²ã";
-        case TRANSPORT_LAYER: return "´«Êä²ã";
-        case NETWORK_LAYER: return "ÍøÂç²ã";
-        case LINK_LAYER: return "Á´Â·²ã";
-        default: return "Î´Öª²ã";
+        case APPLICATION_LAYER: return "åº”ç”¨å±‚";
+        case TRANSPORT_LAYER: return "ä¼ è¾“å±‚";
+        case NETWORK_LAYER: return "ç½‘ç»œå±‚";
+        case LINK_LAYER: return "é“¾è·¯å±‚";
+        default: return "æœªçŸ¥å±‚";
     }
 }
 
-// ´òÓ¡Êı¾İ°üĞÅÏ¢
+// æ‰“å°æ•°æ®åŒ…ä¿¡æ¯
 void printPacket(DataPacket* packet) {
     if (packet == NULL) {
-        printf("Êı¾İ°üÎª¿Õ\n");
+        printf("æ•°æ®åŒ…ä¸ºç©º\n");
         return;
     }
-    printf("===== Êı¾İ°ü ID: %d =====\n", packet->packet_id);
-    printf("Êı¾İÄÚÈİ: %s\n", packet->data);
-    printf("Ğ­ÒéÕ»ĞÅÏ¢:\n");
+    printf("===== æ•°æ®åŒ… ID: %d =====\n", packet->packet_id);
+    printf("æ•°æ®å†…å®¹: %s\n", packet->data);
+    printf("åè®®æ ˆä¿¡æ¯:\n");
 
     ProtocolNode* current = packet->protocol_stack;
     while (current != NULL) {
@@ -92,7 +93,7 @@ void printPacket(DataPacket* packet) {
     printf("========================\n\n");
 }
 
-// ÊÍ·ÅĞ­ÒéÕ»
+// é‡Šæ”¾åè®®æ ˆ
 void freeProtocolStack(ProtocolNode* stack) {
     ProtocolNode* temp;
     while (stack != NULL) {
@@ -102,27 +103,28 @@ void freeProtocolStack(ProtocolNode* stack) {
     }
 }
 
-// ÊÍ·ÅÊı¾İ°üÁ´±í
+// é‡Šæ”¾æ•°æ®åŒ…é“¾è¡¨
 void freePackets(DataPacket* head) {
     DataPacket* temp;
     while (head != NULL) {
         temp = head;
         head = head->next;
-        freeProtocolStack(temp->protocol_stack); // ÏÈÊÍ·ÅĞ­ÒéÕ»
-        free(temp); // ÔÙÊÍ·ÅÊı¾İ°ü
+        freeProtocolStack(temp->protocol_stack); // å…ˆé‡Šæ”¾åè®®æ ˆ
+        free(temp); // å†é‡Šæ”¾æ•°æ®åŒ…
     }
 }
 
 int main() {
-    // ´´½¨µÚÒ»¸öÊı¾İ°ü
+    INIT_UTF8_CONSOLE();
+    // åˆ›å»ºç¬¬ä¸€ä¸ªæ•°æ®åŒ…
     DataPacket* packet1 = createDataPacket(1, "Hello, TCP/IP!");
     if (packet1 == NULL) {
         return 1;
     }
 
-    // ¹¹½¨Ğ­ÒéÕ»£¨Ó¦ÓÃ²ã -> ´«Êä²ã -> ÍøÂç²ã -> Á´Â·²ã£©
+    // æ„å»ºåè®®æ ˆï¼ˆåº”ç”¨å±‚ -> ä¼ è¾“å±‚ -> ç½‘ç»œå±‚ -> é“¾è·¯å±‚ï¼‰
     ProtocolNode* appNode = createProtocolNode(APPLICATION_LAYER, "HTTP/1.1");
-    ProtocolNode* transNode = createProtocolNode(TRANSPORT_LAYER, "TCP, ¶Ë¿Ú: 80");
+    ProtocolNode* transNode = createProtocolNode(TRANSPORT_LAYER, "TCP, ç«¯å£: 80");
     ProtocolNode* netNode = createProtocolNode(NETWORK_LAYER, "IP: 192.168.1.1");
     ProtocolNode* linkNode = createProtocolNode(LINK_LAYER, "MAC: 00:1A:2B:3C:4D:5E");
 
@@ -131,16 +133,16 @@ int main() {
     addProtocolNode(&packet1->protocol_stack, netNode);
     addProtocolNode(&packet1->protocol_stack, linkNode);
 
-    // ´´½¨µÚ¶ş¸öÊı¾İ°ü
+    // åˆ›å»ºç¬¬äºŒä¸ªæ•°æ®åŒ…
     DataPacket* packet2 = createDataPacket(2, "This is a test packet.");
     if (packet2 == NULL) {
         freePackets(packet1);
         return 1;
     }
 
-    // ¹¹½¨µÚ¶ş¸öÊı¾İ°üµÄĞ­ÒéÕ»
+    // æ„å»ºç¬¬äºŒä¸ªæ•°æ®åŒ…çš„åè®®æ ˆ
     ProtocolNode* appNode2 = createProtocolNode(APPLICATION_LAYER, "FTP");
-    ProtocolNode* transNode2 = createProtocolNode(TRANSPORT_LAYER, "TCP, ¶Ë¿Ú: 21");
+    ProtocolNode* transNode2 = createProtocolNode(TRANSPORT_LAYER, "TCP, ç«¯å£: 21");
     ProtocolNode* netNode2 = createProtocolNode(NETWORK_LAYER, "IP: 192.168.1.2");
     ProtocolNode* linkNode2 = createProtocolNode(LINK_LAYER, "MAC: 00:AA:BB:CC:DD:EE");
 
@@ -149,17 +151,17 @@ int main() {
     addProtocolNode(&packet2->protocol_stack, netNode2);
     addProtocolNode(&packet2->protocol_stack, linkNode2);
 
-    // Á´½ÓÊı¾İ°ü
+    // é“¾æ¥æ•°æ®åŒ…
     packet1->next = packet2;
 
-    // ´òÓ¡ËùÓĞÊı¾İ°üĞÅÏ¢
+    // æ‰“å°æ‰€æœ‰æ•°æ®åŒ…ä¿¡æ¯
     DataPacket* current = packet1;
     while (current != NULL) {
         printPacket(current);
         current = current->next;
     }
 
-    // ÊÍ·Å×ÊÔ´
+    // é‡Šæ”¾èµ„æº
     freePackets(packet1);
 
     return 0;
