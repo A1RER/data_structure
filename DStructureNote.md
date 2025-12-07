@@ -1810,3 +1810,6 @@ int main() {
         | `ListNode tail = &dummy;` | `ListNode *tail = &dummy;` | `&dummy`是地址，只能赋值给指针类型，实体无法存地址     |
         | `dummy->next = NULL;`     | `dummy.next = NULL;`       | 实体用`.`，指针用`->`，混写直接编译错误                |
         | `ListNode merge(...)`     | `ListNode* merge(...)`     | 返回实体会拷贝整个结构体，丢失堆链表指针               |
+
+## 双链表
+
