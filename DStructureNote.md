@@ -1813,3 +1813,209 @@ int main() {
 
 ## 双链表
 
+首先我们需要明确的是，为什么会有双链表？
+
+双链表的`prev`（前驱指针）+`next`（后继指针）是为了**弥补单链表 “反向操作低效、找前驱困难” 的问题**，本质是 “用少量内存开销（多一个指针）换操作效率的提升”
+
+单链表有下面的这些缺点：
+
+1. **找某个节点的前驱节点**：只能从头节点遍历到目标节点的前一个，时间复杂度 O (n)（比如删除节点时，要先找前驱）；
+2. **反向遍历链表**：单链表无法直接做到，必须额外用栈 / 数组存储节点，多花 O (n) 空间；
+3. **删除尾节点**：单链表要先遍历到倒数第二个节点（找尾节点的前驱），才能修改`next=NULL`，效率低；
+4. **已知节点删除**：单链表必须知道前驱节点才能删，而双链表直接用`prev`就能拿到前驱。
+
+那么，双链表就有下面的这些用处:
+
+| 指针   | 指向               | 核心作用                                                     |
+| ------ | ------------------ | ------------------------------------------------------------ |
+| `next` | 当前节点的后继节点 | 和单链表一致，支持 “从前往后” 遍历、插入、删除（基础功能）   |
+| `prev` | 当前节点的前驱节点 | 支持 “从后往前” 遍历、直接找前驱节点、反向操作（解决单链表的痛点） |
+
+**举个最直观的例子：删除已知节点**
+
+假设要删除双链表中节点`p`（已知`p`的地址）：
+
+- 单链表：必须先遍历找`p`的前驱`pre`（O (n) 时间），再执行`pre->next = p->next`；
+
+- 双链表：直接用`p->prev`拿到前驱（O (1) 时间），执行下面的代码即可：
+
+  ```c
+  // 删除双链表中已知节点p（前提：p非空，且不是头/尾节点）
+  void deleteDNode(DListNode *p) {
+      if (p == NULL) return;
+      // 第一步：处理前驱节点的next
+      p->prev->next = p->next;
+      // 第二步：处理后继节点的prev
+      p->next->prev = p->prev;
+      // 最后释放p的内存
+      free(p);
+  }
+  ```
+
+  需要特别注意的是：<font color='red'>**双链表指针的“联动维护”**</font>--**两个指针再一次操作后，要一起维护，否则链表会断掉。**
+
+  - 插入节点：既要改`next`也要改`prev`（比如在`p`后插`newNode`，要改`p->next`、`newNode->prev`、`newNode->next`、`p->next->prev`）；
+  - 删除节点：既要改前驱的`next`，也要改后继的`prev`（比如删`p`，要改`p->prev->next`和`p->next->prev`）；
+  - 对比单链表：只需维护`next`，双链表的 “双指针” 是考试改错题的高频考点（比如漏改`prev`导致断链）。
+
+下面，我们给出基础功能（包含定义 创建 遍历 在指定节点后插入 释放内存）函数以及测试代码示例：
+
+### 1.基础功能（定义 创建节点 遍历 插入 释放内存）
+
+```c
+#include "stdlib.h"
+#include "stdio.h"
+#include "../utf8support.h"
+
+// 双链表核心定义
+typedef struct DlistNode{
+    int data;
+    struct DlistNode *prev; //前驱指针
+    struct DlistNode *next; //后继指针
+}DlistNode;
+
+//创建双链表节点
+DlistNode* createDNote(int data){
+    DlistNode *newNode=(DlistNode*) malloc(sizeof (DlistNode));
+    newNode->data=data;
+    newNode->prev=NULL;
+    newNode->next=NULL;
+    return newNode;
+}
+
+//遍历双链表（正向）
+void traverseDlist(DlistNode *head){
+    DlistNode *current=head;
+    if(current==NULL){
+        printf("双链表为空!\n");
+        return;
+
+    }
+    printf("正向遍历双链表");
+    while(current!=NULL){
+        printf("%d ",current->data);
+        current=current->next;
+    }
+    printf("\n");
+}
+
+//遍历双链表（反向）
+void traverseDlistReverse(DlistNode *head){
+    DlistNode *current=head;
+    if(current==NULL){
+        printf("双链表为空！\n");
+        return;
+    }
+
+    //先走到尾节点
+    while (current->next!=NULL){
+        current=current->next;
+    }
+
+    //反向遍历（依靠prev指针）
+    printf("反向遍历双链表\n");
+    while(current!=NULL){
+        printf("%d ",current->data);
+        current=current->prev; //反向移动
+    }
+    printf("\n");
+}
+
+//在指定节点后插入
+void insertAfterDlist(DlistNode *p,int data){
+    if(p==NULL){
+        printf("插入失败！前驱节点为空！\n");
+        return;
+    }
+    DlistNode *newNode= createDNote(data);
+    //维护next指针
+    newNode->next=p->next;
+    p->next=newNode;
+    //维护prev指针
+    newNode->prev=p;
+    if(newNode->next != NULL) { // 若p不是尾节点，更新后继的prev
+        newNode->next->prev = newNode;
+    }
+}
+
+//释放内存
+void freeDList(DlistNode  **head) {
+    DlistNode  *current = *head;
+    while (current != NULL) {
+        DlistNode *next = current->next; // 先保存下一个节点
+        free(current);
+        current = next;
+    }
+    *head = NULL; // 置空头指针，避免野指针
+}
+
+//测试
+int main() {
+    INIT_UTF8_CONSOLE();
+    // ========== 步骤1：创建空双链表，初始化头节点 ==========
+    DlistNode  *head = NULL;
+    // 创建第一个节点（头节点）
+    head = createDNote(10);
+    printf("创建头节点10后：\n");
+    traverseDlist(head); // 测试：正向遍历（输出10）
+
+    // ========== 步骤2：插入节点，构建链表 10⇄20⇄30 ==========
+    insertAfterDlist(head, 20); // 在10后插入20
+    insertAfterDlist(head->next, 30); // 在20后插入30
+    printf("\n插入20、30后：\n");
+    traverseDlist(head); // 正向遍历：10 20 30
+    traverseDlistReverse(head); // 反向遍历：30 20 10
+
+    // ========== 步骤3：测试空链表场景 ==========
+    DlistNode *emptyList = NULL;
+    printf("\n测试空链表遍历：\n");
+    traverseDlist(emptyList); // 输出“双链表为空！”
+
+    // ========== 步骤4：释放内存 ==========
+    freeDList(&head);
+    freeDList(&emptyList); // 空链表释放无副作用
+    printf("\n内存已释放，测试结束！\n");
+
+    return 0;
+}
+```
+
+**测试代码设计思路（考试 / 开发通用）**
+
+1. 测试核心原则
+
+- **覆盖边界场景**：空链表、单节点链表、多节点链表；
+- **验证指针正确性**：正向遍历测`next`，反向遍历测`prev`；
+- **防御性编程**：加`NULL`判断（比如插入时检查前驱节点、遍历前检查头节点）；
+- **内存安全**：测试完释放内存，避免泄漏。
+
+2. 关键测试点拆解
+
+| 测试场景       | 测试代码动作                           | 预期结果                       |
+| -------------- | -------------------------------------- | ------------------------------ |
+| 创建单节点链表 | `head = createDNode(10)` + 正向遍历    | 输出 “正向遍历双链表：10”      |
+| 插入多节点     | 插入 20、30 后正向 / 反向遍历          | 正向：10 20 30；反向：30 20 10 |
+| 空链表遍历     | 传入`NULL`调用`traverseDList`          | 输出 “双链表为空！”            |
+| 指针维护正确性 | 反向遍历依赖`prev`，验证是否能从尾到首 | 反向输出顺序正确，无崩溃       |
+
+需要注意的是：
+
+| 维度     | 核心规则                                 | 考试易错点                              |
+| -------- | ---------------------------------------- | --------------------------------------- |
+| 指针名字 | prev/next 只是约定俗成的名字（好理解）   | 不用纠结名字，重点看赋值逻辑            |
+| 定义顺序 | 和指向无关，只影响内存布局               | 误以为 “先定义的指向前，后定义的指向后” |
+| 指向逻辑 | 赋值语句决定指向（`p->prev = 前节点`）   | 漏写赋值导致指针指向错误（断链）        |
+| 核心功能 | prev 存前驱地址、next 存后继地址（约定） | 反向遍历时用 prev，正向遍历时用 next    |
+
+亦即：
+
+结构体中`prev`和`next`的定义顺序，只影响：
+
+- 节点在内存中的存储顺序（比如先存 data，再存 next，最后存 prev）；
+- 占用的内存大小（但因为都是指针，总大小不变）。
+
+而指针 “指向谁”，完全由你代码中的**赋值语句**决定：
+
+- 你写`p->prev = q`，就表示 p 的 prev 指针指向 q（q 是前一个节点）；
+- 你写`p->next = r`，就表示 p 的 next 指针指向 r（r 是后一个节点）；
+- 哪怕你把指针名字改成`a`和`b`，只要赋值时让`a=前一个地址`、`b=后一个地址`，依然是双链表。

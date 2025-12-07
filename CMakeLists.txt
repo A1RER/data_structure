@@ -35,9 +35,12 @@ add_executable(HuffmanCode_program
 )
 
 add_executable(Review_program
-        programReview/main.c
+        programReview_singleNode/main.c
 )
 
+add_executable(ProRev_TwinNode
+        ProRev_TwinNode/main.c
+)
 # 确保C编译器以UTF-8处理源码
 if(CMAKE_C_COMPILER_ID MATCHES "GNU")
     add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)
