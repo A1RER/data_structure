@@ -41,6 +41,19 @@ add_executable(Review_program
 add_executable(ProRev_TwinNode
         ProRev_TwinNode/main.c
 )
+
+add_executable(programBefPre
+        program251210/main.c
+)
+
+add_executable(P_Dijkstra
+        P_Dijkstra/main.c
+)
+
+add_executable(ProPrim
+        ProPrim/main.c
+)
+
 # 确保C编译器以UTF-8处理源码
 if(CMAKE_C_COMPILER_ID MATCHES "GNU")
     add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)

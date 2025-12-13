@@ -212,19 +212,19 @@ void Encode(Hcodetype code[], char EncodedBits[], int *len) {
 
 // 对编码串进行译码：根据哈夫曼树还原为原始字符串
 void Decode(Htreetype t[], char EncodedBits[], int length) {
-    int cnt = 0;    //cnt亦即编码串当前遍历到的索引（bit位）
-    int p = m - 1;  // 从哈夫曼树根节点开始（根节点索引为m-1，总节点数为m,最后一个节点为根）
+    int cnt = 0;    // 编码串当前遍历到的索引（bit位）
+    int p = m - 1;  // 从哈夫曼树根节点开始（根节点索引为m-1）
 
     printf("译码结果：\n");
 
-    //遍历编码串的所有bit位
+    // 遍历编码串的所有bit位
     while (cnt < length) {
         // 遍历到叶子节点（无左右孩子）时，输出字符并重置为根节点
         while (t[p].Lchild != -1 && t[p].Rchild != -1) {
-            if (EncodedBits[cnt++] == '1') {
-                p = t[p].Lchild;  // 编码为1，走左子树（与构建时约定一致）
+            if (EncodedBits[cnt++] == '0') {  // 修复：0走左子树
+                p = t[p].Lchild;
             } else {
-                p = t[p].Rchild;  // 编码为0，走右子树
+                p = t[p].Rchild;  // 修复：1走右子树
             }
         }
         printf("%c", t[p].ch);  // 输出叶子节点对应的字符
@@ -232,7 +232,6 @@ void Decode(Htreetype t[], char EncodedBits[], int length) {
     }
     printf("\n");
 }
-
 // 计算并分析压缩效果
 void CalculateCompression(Hcodetype hc[], Htreetype ht[]) {
     int original_len = strlen(test_str) * 6;  // 原始长度：假设每个字符6位（简化计算）
