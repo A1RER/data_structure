@@ -54,6 +54,19 @@ add_executable(ProPrim
         ProPrim/main.c
 )
 
+add_executable(project_review_stack
+        proj_Rev_SqStack/main.c
+)
+
+add_executable(project_review_StackNode
+        proj_Rev_LinkStack/main.c
+)
+
+add_executable(project_review_ComprehensiveApplicationOfStacks
+        proj_Rev_ComaStack/main.c
+)
+
+
 # 确保C编译器以UTF-8处理源码
 if(CMAKE_C_COMPILER_ID MATCHES "GNU")
     add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)
