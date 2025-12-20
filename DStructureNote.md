@@ -847,11 +847,84 @@ int main() {
 
 4. 最后，我们来用通俗类比的方式加深记忆
 
-把 `main` 中的 `head` 想象成「你手里的地址标签」（写着链表头的位置）：
+   把 `main` 中的 `head` 想象成「你手里的地址标签」（写着链表头的位置）：
 
-- 传一级指针 `head`：把标签复印一份给函数，函数改复印件，你的原标签没变；
-- 传二级指针 `&head`：把「你放标签的抽屉地址」告诉函数，函数直接跑到你的抽屉里修改原标签；
-- `*head`：函数根据抽屉地址，打开抽屉拿到你的原标签，修改上面的内容。
+   - 传一级指针 `head`：把标签复印一份给函数，函数改复印件，你的原标签没变；
+   - 传二级指针 `&head`：把「你放标签的抽屉地址」告诉函数，函数直接跑到你的抽屉里修改原标签；
+   - `*head`：函数根据抽屉地址，打开抽屉拿到你的原标签，修改上面的内容。
+
+5. 在这里，关于二级指针，我们给出一个更通俗化的理解方式：
+
+   我们已经知道了，根据链表的定义，它是由很多个结构体元素组成的“链式结构”，每个结构体元素包含data（节点值）和next（指向下一个节点的指针）。
+
+   结构体的定义如下：
+
+   ```c
+   typedef struct Node{
+   	int data;
+   	struct Node *next;
+   }Node;
+   ```
+
+   上面定义中的`struct Node *next` 就框死了这个`next`—— 它只能是 “指向 Node 类型结构体的指针”，存的是 “下一个 Node 结构体的地址”，不是 “结构体里元素的地址”（这里纠正个小细节：next 存的是整个下一个节点的地址，不是节点里某一个元素的地址）
+
+   功能函数要让这个传递进去的值存在结构体里，并让它的 next 指向原来的头节点，让传递进去的 data 成为新头节点的值，所以说我们的功能函数首先要完成的目标就是，传一个值进去，存住它。
+
+   所以 我们定义一个`*newNode`，为了保证这个指针的安全，它的前面加上一个`Node`，就把它框在了`Node`这个 “离散的结构体” 里
+
+   ```c
+   Node *newNode=createNode(data);	//createNode()见定义
+   ```
+
+   上面的语句里 `newNode`就是链表内部的一个指向新数据的指针，它的值就是链表内这个新数据（新节点）的地址 ——`createNode`里 malloc 给新节点分配了内存，newNode 就拿着这个新节点的门牌号。
+
+   接下来 我们要让这个新数据的 next 指向原来的头节点。新数据的 next 怎么表示？我们的新数据的地址就是 newNode 这个指针指向的地方，根据链表的结构，既然 newNode 已经被框在了结构体里，那我们就用它来访问结构体的成员。
+
+   所以我们用`newNode->next`表示这个新数据的 next（`->`就是 “通过结构体指针访问结构体成员” 的专属写法），同时，我们把原来链表头节点的地址赋给它：
+
+   ```c
+   newNode->next = *head; 
+   ```
+
+   再把现在的 newNode 的地址赋给`*head`，我们的新链表，就准备就绪了：
+
+   ```c
+   *head = newNode;
+   ```
+
+   那么为什么要用二级指针呢？
+
+   原因就在于，头插函数操作的，不是 “原来的头节点（那个结构体）”，而是 “指向头节点的头指针”—— 这里先掰清楚两个关键概念：
+
+   - 「头节点」：是实实在在的 Node 结构体，有 data、有 next，占内存；
+   - 「头指针（我们代码里的 head）」：是个`Node *`类型的变量，它不存数据，只存 “头节点的地址”—— 说白了，head 就是个记着头节点门牌号的小本子。
+
+   我们要改的不是头节点这个结构体本身（比如改头节点的 data），而是要改 “头指针里记的门牌号”—— 原来头指针记的是旧头节点的地址，现在要改成新节点的地址，这样链表的入口才会指向新节点。
+
+   那既然我们要改它（改 head 这个小本子里的门牌号），就绕不开 “改原件要传地址” 的规则：
+
+   - 如果函数参数只传`Node *head`，那传进去的是 head 里的门牌号副本 —— 函数里改的是副本本子，主函数里的原本子（head）纹丝不动，新节点插了也白插；
+   - 所以必须传 “head 这个小本子本身的地址”（也就是`&head`），函数参数要用 “能存指针地址的二级指针”（`Node **head`）来接 —— 这样函数里拿到的是 head 本子的门牌号，就能直接改原本子里记的内容了。
+
+   再把这个逻辑落回代码，就全通了：
+
+   ```c
+   // 函数参数是二级指针，接的是主函数里head的地址
+   void InsertHead(Node **head, int data) {
+       Node *newNode = createNode(data); // 造新节点，拿新节点地址
+       newNode->next = *head; // *head = 解引用二级指针，拿到原head里记的旧头节点地址 → 新节点的next指向旧头节点
+       *head = newNode; // 解引用二级指针，直接改原head里的内容 → 让head记新节点的地址，新节点成了新头
+   }
+   
+   // 主函数里调用
+   int main() {
+       Node *head = NULL; // 头指针，初始记的是NULL（空链表）
+       InsertHead(&head, 10); // &head = 取head本子的地址，传给二级指针
+       // 调用后，head里的内容从NULL变成了新节点的地址，头插成功
+   }
+   ```
+
+   
 
 ### **4.尾部插入**
 
@@ -2699,7 +2772,7 @@ void TestSqStack()
 
 3. 顺序栈弹栈
 
-   弹栈的意思就是<font color='blue'>最后入栈的数据被有先弹出、栈顶指针下移</font>。所以也就可以理解为何有对应的“压栈”了。
+   弹栈的意思就是<font color='blue'>最后入栈的数据被优先弹出、栈顶指针下移</font>。所以也就可以理解为何有对应的“压栈”了。
 
    下面，我们给出示例代码：
 
@@ -3343,9 +3416,999 @@ int main()
 
 #### 括号匹配
 
+1. 代码示例
+
+   ```c
+   #include <stdio.h>
+   #include <stdlib.h>
+   #include <string.h>
+   
+   //顺序栈定义（复用基础结构）
+   #define MAX_STACK_SIZE 100
+   typedef struct {
+       char *base;
+       char *top;
+       int stacksize;
+   } CharSqstack;
+   
+   //初始化字符栈
+   int InitCharStack(CharSqStack *stack){
+       stack->base=(char*)malloc(MAX_STACK_SIZE * sizeof(char));
+       if(stack->base==NULL){
+           perror("malloc failed");
+           return -1;
+       }
+       stack->top=stack->base;
+       stack->stacksize=MAX_STACK_SIZE;
+       return 0;
+   }
+   
+   //字符入栈
+   int PushCharStack(CharSqstack *stack,char data){
+       if(stack->top - stack->base >= stack->stacksize){
+           printf("栈满！入栈失败");
+           return -1;
+       }
+       *(stack->top++)=data;
+       return 0;
+   }
+   
+   //字符出栈
+   int PopCharStack(CharSqStack *stack,char *data){
+       if(stack->top==stack->base){
+           printf("栈空！入栈失败！");
+           return -1;
+       }
+       *data=*(--stack->top);
+       return 0;
+   }
+   
+   //判断字符栈是否为空
+   int IsCharStackEmpty(CharSqstack stack){
+       return(stack.top==stack.base)? 1:0;
+   }
+   
+   //销毁字符栈
+   void DestoryCharStack(CharSqStack *stack){
+       free(stack->base);
+       stack->base=NULL;
+       stack->top=NULL;
+       stack->stacksize=0;
+   }
+   
+   //括号匹配功能函数
+   int IsBracketMatch(const char *str){
+       if(str==NULL || strlen(str)==0){
+           printf("输入字符串为空！\n");
+           return 0;
+       }
+       
+       CharSqStack stack;
+       if(InitCharStack(&stack)!=0){
+           return 0;//初始化失败
+       }
+       
+       char topChar;
+       int i=0;
+       while(str[i]!=0){
+           //左括号入栈
+           if(str[i] == '(' || str[i] == '[' || str[i] == '{'){
+               PushCharStack(&stack,str[i])
+           }
+           //右括号匹配
+           else if(str[i] == ')' || str[i] == ']' || str[i] == '}'){
+               //栈空->输入的右括号多了->匹配失败
+               if(IsCharStackEmpty(stack)){
+                   DestoryCharStack(&stack);
+                   return 0;
+               }
+           	//弹出栈顶左括号 看是否匹配
+               if((str[i] == ')' && topChar != '(') ||
+                   (str[i] == ']' && topChar != '[') ||
+                   (str[i] == '}' && topChar != '{')){
+                   DestoryCharStack(&stack); 	//匹配 销毁原栈
+                   return 0;
+               }          
+           }
+           i++；
+       }
+       
+       //遍历结束后栈空->匹配成功，否则就是左括号多了
+       int isMatch=IsCharStackEmpty(stack)? 1:0;
+       DestroyCharStack(&stack);
+       return isMatch;
+   }
+   
+   //测试
+   int main(){
+          printf("========== 括号匹配测试 ==========\n");
+       const char *testCases[] = {
+           "({[]})",    // 匹配
+           "([)]",      // 类型不匹配
+           "({[]}",     // 左括号多
+           "({[]}))",   // 右括号多
+           "a+b*(c-d)", // 含其他字符的合法表达式
+           NULL
+       };
+       
+        for (int i = 0; testCases[i] != NULL; i++) {
+           int res = IsBracketMatch(testCases[i]);
+           printf("字符串: \"%s\" → %s\n", testCases[i], res ? "括号匹配" : "括号不匹配");
+       }
+   
+       return 0;
+   }
+   ```
+
+2. 相关问题：
+
+   - 关于`perror`:
+
+     `perror`的全称是print error,核心作用是**打印”自定义提示+系统自带的错误原因“**。
+
+     比如：
+
+     ```c
+     stack->base = (char *)malloc(MAX_STACK_SIZE * sizeof(char));
+     if (stack->base == NULL) {
+         perror("malloc failed"); // 关键：用perror而不是printf
+         return -1;
+     }
+     ```
+
+     如果`malloc`申请内存失败，运行时会输出
+
+     ```bash
+     malloc failed: Cannot allocate memory
+     ```
+
+     - 前半段 `malloc failed`：是你自定义的提示，告诉程序哪里错了；
+     - 后半段 `Cannot allocate memory`：是系统自动补充的**具体错误原因**，由操作系统提供。
+
+   - 核心逻辑：
+
+      左括号入栈，右括号匹配栈顶左括号出栈；栈空遇右括号 / 类型不匹配→失败，遍历完栈空→成功。
+
+   - 关于`int IsBracketMatch(const char *str)`:
+
+     **特别说明 const**
+
+     我们以`const char *str`为例，来拆解一下const的应用：
+
+     | 符号 / 关键字 | 角色定位           | 大白话解释                                               |
+     | ------------- | ------------------ | -------------------------------------------------------- |
+     | `const`       | 修饰符（只读标签） | 给 “它右边的东西” 贴 “禁止修改” 标签                     |
+     | `char`        | 数据类型           | 表示指针指向的内存里存的是「字符」（比如 '('、'a'）      |
+     | `*`           | 指针标识           | 表示`str`是一个「指针变量」（不是普通变量）              |
+     | `str`         | 变量名             | 这个指针变量的名字（你可以随便取，比如叫`s`、`p`都可以） |
+
+     1. `const`修饰的是`char`，这个修饰，到底是什么意思？
+
+        需要先明确的是，**<font color='red'>const修饰的是它==”右边紧挨着“==的内容！</font>**
+
+        所以在这里，它的意思就是：`str`这个**指针指向的内存里**，所有char类型的字符，**都是只读的，不能通过str修改。**
+
+        举个例子：
+
+        ```c
+        const char *str = "abc";
+        str[0] = 'x'; // ❌ 报错！因为const修饰char（字符内容），不能改
+        str = "def";  // ✅ 可以！因为const没修饰str（指针本身），指针可以指向新地址
+        ```
+
+     2. 那，`str`又是什么？
+
+        `str` 就是一个**指针变量**，它的唯一作用是「存储内存地址」—— 这个地址指向一串`char`类型的字符（比如字符串`"({[]})"`的起始地址）。
+
+        你可以把`str`想象成：
+
+        - 一张「纸条」（指针变量）；
+        - 纸条上写着「字帖的门牌号」（内存地址）；
+        - 字帖本身是`char`（字符内容），被`const`贴了只读标签。
+
+        所以`str`的本质是 “记地址的纸条”，而`const`管的是 “纸条指向的字帖能不能改”，不管 “纸条本身能不能换”
+
+     3. 给一张表格，加深记忆：
+
+        | 写法                    | const 修饰谁     | 能不能改？                              | 咱们项目用在哪？                  |
+        | ----------------------- | ---------------- | --------------------------------------- | --------------------------------- |
+        | `const char *str`       | char（字符内容） | ❌ 不能改`str[i]`；✅ 能改`str`指向的地址 | 括号匹配、中缀转后缀的 infix 参数 |
+        | `char *const str`       | str（指针本身）  | ✅ 能改`str[i]`；❌ 不能改`str`指向的地址 | 咱们项目没用（极少用）            |
+        | `const char *const str` | 都修饰           | ❌ 既不能改内容，也不能改地址            | 咱们项目没用（几乎不用）          |
+        | `char str`              | 无 const         | ✅ 能改 str 的值                         | 普通字符变量（比如遍历用的`c`）   |
+
+   - 关于 函数传递
+
+     在这里，我们会彻底搞懂，什么时候用指针，什么时候用参数，指针到底是啥？
+
+     1. 如果把计算机想象成储物柜的话：
+
+        - 「内存地址」= 储物柜的门牌号（比如 0x1000、0x1004，唯一标识一个柜子）；
+        - 「变量」= 储物柜里的东西（比如 int 变量存数字 10，char 变量存字符 '('）；
+        - 「指针变量」= 一个**专门记门牌号的小本子**（本子里只写门牌号，不存实际东西）；
+        - 「指针的值」= 小本子上写的门牌号（也就是内存地址）。
+
+        为什么出现了*？我们不妨这样来理解
+
+        `int *p->int* p`,我们再去看这个代码，可以把`int*`看成一个**新的数据类型**，它用来表示”**（记录int类型数据的）<font color='blue'>地址</font>**“。
+
+        需要注意的是：`int* p` 本质是 `int (*p)`——`*` 还是修饰`p`的（表示 p 是指针），只是书写时习惯把`int*`写在一起（C 语言语法允许），比如下面的
+
+        ```c
+        int* p1, p2; // p1是int地址类型，p2是普通int类型（易错！）
+        int *p1, *p2; // 两个都是int地址类型（正确）
+        ```
+
+        当然了，*本身也具有”解引用“的作用。这个后面再说。
+
+     2. 如果函数的参数是指针的话···
+
+        函数的参数是指针，就代表函数需要的是*储物柜的门牌号*。意味着**他要开始对原件操作了！**
+
+        下面我们来辨析一下：
+
+        - 参数是结构体--传值-> 传“储物柜里的东西”
+
+          ```c
+          // 函数要的是“整个结构体（储物柜里的所有东西）”
+          int IsCharStackEmpty(CharSqStack stack) {
+              return stack.top == stack.base;
+          }
+          
+          // 调用：传结构体本身（复制一份给函数）
+          CharSqStack s;
+          InitCharStack(&s);
+          int empty = IsCharStackEmpty(s); // 传“东西”，不是地址
+          ```
+
+        - 参数是“结构体指针”-> 传“门牌号”
+
+          ```c
+          // 函数要的是“结构体的门牌号（地址）”
+          int IsCharStackEmpty(CharSqStack *stack) {
+              return stack->top == stack->base; // 用->访问指针指向的结构体成员
+          }
+          
+          // 调用：必须传结构体的地址（门牌号）
+          CharSqStack s;
+          InitCharStack(&s);
+          int empty = IsCharStackEmpty(&s); // &s就是s的地址（门牌号）
+          ```
+
+          关键结论：
+
+          - 函数参数是「普通类型」（int/char/ 结构体）→ 传 “值”（东西本身，会复制副本）；
+          - 函数参数是「指针类型」（int*/char*/ 结构体 *）→ 传 “地址”（门牌号，指向东西的位置）；
+
+     3. 为什么参数是指针？
+
+        ```c
+        // 错误：传结构体副本
+        int PushCharStack(CharSqStack stack, char data) {
+            *(stack.top++) = data; // 修改的是副本的top，原栈的top没变！
+            return 0;
+        }
+        
+        // 调用后原栈完全没变化
+        CharSqStack s;
+        InitCharStack(&s);
+        PushCharStack(s, '('); // 传副本，白忙活
+        ```
+
+        上面的代码，就只是操作了副本。
+
+        我们再来看一个更复杂的--二级指针：
+
+        （再回顾一下链表的知识）
+
+        ```c
+        #include <stdio.h>
+        #include <stdlib.h>
+        
+        // 链表节点定义
+        typedef struct Node {
+            int val;
+            struct Node *next;
+        } Node;
+        
+        // 错误：传一级指针（head是副本）
+        void InsertHead_Wrong(Node *head, int val) {
+            // 1. 创建新节点
+            Node *newNode = (Node*)malloc(sizeof(Node));
+            newNode->val = val;
+            newNode->next = head; // 新节点指向原来的头
+            
+            // 2. 试图修改头指针（但改的是副本！）
+            head = newNode; 
+            printf("函数内head地址：%p\n", head); // 指向新节点
+        }
+        
+        int main() {
+            Node *head = NULL; // 空链表，head是一级指针（小本子）
+            InsertHead_Wrong(head, 10); // 传一级指针（给小本子的复印件）
+            printf("函数外head地址：%p\n", head); // 还是NULL，没变化！
+            return 0;
+        }
+        ```
+
+        主函数里的head,是一个记录node类型地址值的变量，所以它是指针，但是我们要让这个head通过功能函数的操作之后指向别的地方，因为函数传递的是值的副本，如果直接把head传递进去的话，函数只会修改head地址值的副本，head不会改变。所以我们要给函数head的地址。
+
+        正确的代码就是这样：
+
+        ```c
+        // 正确：传二级指针（pp是“小本子的门牌号”）
+        void InsertHead_Right(Node **pp, int val) {
+            Node *newNode = (Node*)malloc(sizeof(Node));
+            newNode->val = val;
+            newNode->next = *pp; // *pp = 原head（按笔记本找到小本子，再找节点）
+            
+            // 修改原head（按笔记本找到小本子，直接改）
+            *pp = newNode; 
+            printf("函数内*pp地址：%p\n", *pp);
+        }
+        
+        int main() {
+            Node *head = NULL;
+            InsertHead_Right(&head, 10); // &head = head的地址（小本子的门牌号）
+            printf("函数外head地址：%p\n", head); // 和函数内一致，改成功了
+            return 0;
+        }
+        ```
+
+        我们把head的地址给了函数值之后，函数就会操作head的地址值，这个时候head这个指针的位置就会改变，从而指向我们要他指向的地方。
+
+        | 内存层级            | 存储的内容                        | 变量 / 地址                             | 大白话                           |
+        | ------------------- | --------------------------------- | --------------------------------------- | -------------------------------- |
+        | 第一层（节点）      | 链表节点数据（val=10, next=NULL） | 地址：0x123456                          | 头节点本身（储物柜）             |
+        | 第二层（head 变量） | 头节点的地址值（0x123456）        | 地址：0x7fff0000（head 变量的内存地址） | 记头节点地址的小本子（一级指针） |
+        | 第三层（pp 指针）   | head 变量的地址值（0x7fff0000）   | 地址：0x7fff0004（pp 变量的内存地址）   | 记小本子地址的笔记本（二级指针） |
+
+        详细的内容，可以看链表的笔记。
+
 #### 进制转换
 
+1. 完整代码：
+
+   ```c
+   #include <stdio.h>
+   #include <stdlib.h>
+   
+   #define MAX_STACK_SIZE 100
+   
+   typedef struct{
+       int* base;
+       int* top;
+       int stacksize;
+   } IntSqStack;
+   
+   //初始化整数栈
+   int InitIntStack(IntSqStack *stack){
+       stack->base = (int*)malloc(MAX_STACK_SIZE * sizeof(int));
+       if(stack->base == NULL){
+           perror("malloc failed");
+           return -1;
+       }
+       stack->top=stack->base;
+       stack->stacksize=MAX_STACK_SIZE;
+       return 0        
+   }
+   
+   //整数入栈
+   int PushIntStack(IntSqStack *stack, int data) {
+       if (stack->top - stack->base >= stack->stacksize) {
+           printf("栈满！入栈失败\n");
+           return -1;
+       }
+       *(stack->top++) = data;
+       return 0;
+   }
+   
+   //整数出栈
+   int PopIntStack(IntSqStack *stack, int *data) {
+       if (stack->top == stack->base) {
+           printf("栈空！出栈失败\n");
+           return -1;
+       }
+       *data = *(--stack->top);
+       return 0;
+   }
+   
+   //判断整数栈是否为空
+   int IsIntStackEmpty(IntSqStack stack) {
+       return (stack.top == stack.base) ? 1 : 0;
+   }
+   
+   //销毁整数栈，并释放内存
+   void DestroyIntStack(IntSqStack *stack) {
+       free(stack->base);
+       stack->base = NULL;
+       stack->top = NULL;
+       stack->stacksize = 0;
+   }
+   
+   //进制转换核心功能
+   /**
+   decimal 待转换的十进制数
+   base 目标进制
+   */
+   void DecimalToAnyBase(int decimal, int base){
+       //合法性校验
+       if(base<2||base>16){
+           printf("错误！进制必须在2和16之间！\n");
+           return;
+       }
+       
+       //特殊处理：十进制0直接输出0
+       if(decimal==0){
+           printf("十进制0→ %d进制:0\n",base);
+           return;
+       }
+       
+       IntSqStack stack;
+       if(InitIntStack(&stack)!=0){
+           return;
+       }
+       
+       //16进制字符映射表
+       const char digits[]="0123456789ABCDEF";
+       int remainder;
+       
+       //核心逻辑：除进制取余，余数入栈
+       while(decimal>0){
+           reminder=decimal%base;
+           PushIntStack(&stack,reminder);
+           decimal=decimal/base;
+       }
+       
+       //逆序弹出余数输出
+       printf("十进制%d -> %d进制：",decimal,base);
+       int data;
+       while(!IsIntStackEmpty(stack)){
+           PopIntStack(&stack, &data);
+           printf("%c", digits[data]);
+       }
+       printf("\n");
+       
+       DestroyIntStack(&stack);
+   }
+   
+   //测试模块
+   int main() {
+       printf("========== 进制转换测试 ==========\n");
+       DecimalToAnyBase(13, 2);   // 13 → 1101
+       DecimalToAnyBase(13, 8);   // 13 → 15
+       DecimalToAnyBase(13, 16);  // 13 → D
+       DecimalToAnyBase(0, 2);    // 0 → 0
+       DecimalToAnyBase(255, 16); // 255 → FF
+       DecimalToAnyBase(100, 7);  // 100 → 202
+   
+       return 0;
+   }
+   ```
+
+2. 代码是怎么来的？
+
+   首先明确一下digits:
+
+   ```c
+   char digits[] = "0123456789ABCDEF"; // 相当于一个“余数→字符”的字典
+   // 下标： 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+   // 值：   0 1 2 3 4 5 6 7 8 9 A  B  C  D  E  F
+   ```
+
+   1. 弹栈时：`PopIntStack(&stack, &data)` → 把栈里的余数`10`赋值给`data`；
+   2. 查字典：`digits[data]` = `digits[10]` → 取到字符`'A'`；
+   3. 输出：`printf("%c", 'A')` → 屏幕显示`A`。
+
+   然后，我们梳理一个关键问题：
+
+   你拿到这个代码，作为人，你会怎么解决?
+
+   写任何算法功能，都不是凭空写的，而是：
+
+   1. 先想「人怎么解决这个问题」（找直觉）；
+   2. 找一个数据结构模拟人的行为
+   3. 把人的行为拆成「条件判断 + 数据结构操作」；
+   4. 处理边界情况；
+   5. 补充工程细节
+
+   - 先想「人是怎么手动把十进制转二进制 / 八进制的？」
+
+     以「十进制 13 转二进制」为例，你小学学的除法法：
+
+     1. 13 ÷ 2 = 6，余数 1 → 记下来余数 1；
+
+     2. 6 ÷ 2 = 3，余数 0 → 记下来余数 0；
+
+     3. 3 ÷ 2 = 1，余数 1 → 记下来余数 1；
+
+     4. 1 ÷ 2 = 0，余数 1 → 记下来余数 1；
+
+     5. 停止计算，把余数**倒着读**：1 1 0 1 → 就是 13 的二进制。
+
+        👉 核心直觉：
+
+        反复除以目标进制（2/8/16），记余数；
+
+        直到商为 0 停止；
+
+        余数「倒序」就是结果（因为先算的余数是低位，后算的是高位）。
+
+        再举个例子：13 转八进制
+
+        13 ÷ 8 = 1，余数 5；
+
+        1 ÷ 8 = 0，余数 1；
+
+        余数倒读：1 5 → 就是 13 的八进制。
+
+   - 第二步：为什么用“栈”实现？--天然的“倒序工具”
+
+     你手动算要 “倒着读余数”，但程序不会 “倒着读”，而栈的「后进先出」特性，刚好能帮我们自动实现倒序：
+
+     - 每算一个余数 → 入栈（比如 13 转二进制，余数依次入栈：1、0、1、1）；
+     - 最后把余数从栈里弹出来 → 顺序就是 1、1、0、1（刚好是倒序后的结果）。
+
+     | 手动算的步骤   | 程序用栈的操作         |
+     | -------------- | ---------------------- |
+     | 算余数、记下来 | 余数入栈               |
+     | 倒着读余数     | 栈弹出余数（天然倒序） |
+
+   - 第三步：把「人类算题逻辑」翻译成「代码步骤」
+
+   我们以「十进制转任意进制（2~16）」为例，拆成可落地的代码步骤，每一步讲 “为什么这么写”：
+
+   1. 处理特殊情况：
+
+      ```c
+      void DecimalToAnyBase(int decimal, int base) {
+          // 校验1：进制必须在2~16之间（超出范围无意义）
+          if (base < 2 || base > 16) {
+              printf("进制只能是2~16！\n");
+              return;
+          }
+          // 校验2：十进制0直接输出0（不然栈空，没余数可弹）
+          if (decimal == 0) {
+              printf("0转%d进制：0\n", base);
+              return;
+          }
+      ```
+
+   2. 初始化栈
+
+      ```c
+          IntSqStack stack;
+          InitIntStack(&stack); // 初始化空栈
+          // 16进制需要映射A-F（0-9用数字，10-15用A-F）
+          const char digits[] = "0123456789ABCDEF";
+      ```
+
+   3. 算余数，入栈
+
+      ```c
+          int remainder; // 存余数
+          while (decimal > 0) { // 商>0就继续算
+              remainder = decimal % base; // 算余数（比如13%2=1）
+              PushIntStack(&stack, remainder); // 余数入栈
+              decimal = decimal / base; // 商作为新的被除数（比如13/2=6）
+          }
+      ```
+
+   4. 弹出栈里的余数，输出结果
+
+      ```c
+          printf("十进制转%d进制：", base);
+          int data;
+          while (!IsIntStackEmpty(stack)) { // 栈不空就继续弹
+              PopIntStack(&stack, &data); // 弹出余数
+              // 16进制处理：data=10→A，data=15→F
+              printf("%c", digits[data]);
+          }
+          printf("\n");
+      ```
+
+   5. 防止内存泄漏--销毁栈
+
+      ```c
+          DestroyIntStack(&stack);
+      }
+      ```
+
 #### 表达式
+
+1. 代码示例：
+
+   ```c
+   #include <stdio.h>
+   #include <stdlib.h>
+   #include <string.h>
+   #include <ctype.h>
+   
+   //字符栈：存储运算符
+   typedef struct {
+       char *base;
+       char *top;
+       int stacksize;
+   } CharSqStack;
+   
+   //整数栈；存储操作数
+   typedef struct {
+       int *base;
+       int *top;
+       int stacksize;
+   } IntSqStack;
+   
+   // ---------------- 字符栈操作 ----------------
+   int InitCharStack(CharSqStack *stack) {
+       stack->base = (char *)malloc(MAX_STACK_SIZE * sizeof(char));
+       if (stack->base == NULL) {
+           perror("malloc failed");
+           return -1;
+       }
+       stack->top = stack->base;
+       stack->stacksize = MAX_STACK_SIZE;
+       return 0;
+   }
+   
+   int PushCharStack(CharSqStack *stack, char data) {
+       if (stack->top - stack->base >= MAX_STACK_SIZE) {
+           printf("运算符栈满！\n");
+           return -1;
+       }
+       *(stack->top++) = data;
+       return 0;
+   }
+   
+   int PopCharStack(CharSqStack *stack, char *data) {
+       if (stack->top == stack->base) {
+           printf("运算符栈空！\n");
+           return -1;
+       }
+       *data = *(--stack->top);
+       return 0;
+   }
+   
+   char GetTopChar(CharSqStack stack) {
+       if (stack.top == stack.base) {
+           return '#'; // 栈空标记
+       }
+       return *(stack.top - 1);
+   }
+   
+   void DestroyCharStack(CharSqStack *stack) {
+       free(stack->base);
+       stack->base = NULL;
+       stack->top = NULL;
+   }
+   
+   // ---------------- 整数栈操作 ----------------
+   int InitIntStack(IntSqStack *stack) {
+       stack->base = (int *)malloc(MAX_STACK_SIZE * sizeof(int));
+       if (stack->base == NULL) {
+           perror("malloc failed");
+           return -1;
+       }
+       stack->top = stack->base;
+       stack->stacksize = MAX_STACK_SIZE;
+       return 0;
+   }
+   
+   int PushIntStack(IntSqStack *stack, int data) {
+       if (stack->top - stack->base >= MAX_STACK_SIZE) {
+           printf("操作数栈满！\n");
+           return -1;
+       }
+       *(stack->top++) = data;
+       return 0;
+   }
+   
+   int PopIntStack(IntSqStack *stack, int *data) {
+       if (stack->top == stack->base) {
+           printf("操作数栈空！\n");
+           return -1;
+       }
+       *data = *(--stack->top);
+       return 0;
+   }
+   
+   void DestroyIntStack(IntSqStack *stack) {
+       free(stack->base);
+       stack->base = NULL;
+       stack->top = NULL;
+   }
+   
+   /**********************************************
+   * 表达式求值--核心功能
+   ***********************************************/
+   
+   //获取运算符优先级
+   int GetOpPriorty(char op){
+       swtich(op){
+           case'#':return 0;
+           case '(': return 1;
+           case '+': case '-': return 2;
+           case '*': case '/': return 3;
+           default: return -1;
+       }
+   }
+   
+   //中缀表达式转后缀表达式
+   void InfixToPostfix(const char *infix,char *postfix){
+       CharSqStack opStack;
+       InitCharStack(&opStack);
+       PushCharStack(&opStack, '#'); // 栈底标记
+       
+       int i=0,j=0;
+       char op,topOp;
+       while(infix[i]!='\0'){
+           //数字直接写入（支持多位数）
+           if(isdigit(infix[i])){
+               while(isdigit(infix[i])){
+                   postfix[j++]=infix[i++];
+               }
+               postfix[j++]=' ';	//空格分隔操作数
+           }
+           //左括号入栈
+           else if(infix[i]=='('){
+               PushCharStack(&opStack,infix[i]);
+               i++;
+           }
+           //右括号：弹出运算符直到左括号
+       }
+   }
+   ```
+
+2. 需要说明的问题：
+
+   先明确：为什么要转后缀？
+
+   你平时写的 `3+4*2-1` 是「中缀表达式」（运算符在两个数中间），但计算机看不懂 “优先级”（比如先算乘除后算加减），所以要先转成「后缀表达式」（运算符在两个数后面，比如 `3 4 2 * + 1 -`）—— 后缀表达式没有优先级、没有括号，计算机能无脑算。
+
+   - 第一步：先学「人类怎么手动转中缀→后缀」（核心直觉）
+
+     以 `3+4*2-1` 为例，手动转后缀的规则（记死这 4 条）：
+
+     1. **数字直接写下来**；
+     2. **运算符（+、-、\*、/）**：找「最近的、优先级不低于自己」的运算符，把它写下来，自己先 “存着”；
+     3. **左括号**：直接 “存着”；
+     4. **右括号**：把 “存着的” 运算符写到直到左括号（左括号不写）；
+     5. **最后**：把剩下 “存着的” 运算符全写下来。
+
+     👉 手动转 `3+4*2-1` 的过程：
+
+     - 看到 3 → 写下来：`3`；
+     - 看到 + → 存起来（暂时不写）；
+     - 看到 4 → 写下来：`3 4`；
+     - 看到 * → 优先级比 + 高，存起来；
+     - 看到 2 → 写下来：`3 4 2`；
+     - 看到 - → 优先级和 + 一样，先把存的 *、+ 写下来，再存 -：`3 4 2 * +`；
+     - 看到 1 → 写下来：`3 4 2 * + 1`；
+     - 最后把存的 - 写下来：`3 4 2 * + 1 -`（最终后缀）。
+
+     👉 再试含括号的 `(3+4)*2-1`：
+
+     - 看到 ( → 存起来；
+     - 看到 3 → 写：`3`；
+     - 看到 + → 存；
+     - 看到 4 → 写：`3 4`；
+     - 看到) → 把存的 + 写下来（左括号扔掉）：`3 4 +`；
+     - 看到 * → 存；
+     - 看到 2 → 写：`3 4 + 2`；
+     - 看到 - → 把存的 * 写下来，再存 -：`3 4 + 2 *`；
+     - 看到 1 → 写：`3 4 + 2 * 1`；
+     - 最后写存的 -：`3 4 + 2 * 1 -`。
+
+   - 第二步：人类怎么算后缀表达式？
+
+     还是以 `3 4 2 * + 1 -` 为例，规则只有 2 条：
+
+     1. **遇到数字就记下来**；
+     2. **遇到运算符**：找最近记的两个数字，用运算符算，结果替换这两个数字；
+     3. 最后剩下的数字就是结果。
+
+     👉 手动算的过程：
+
+     - 看到 3 → 记：`[3]`；
+     - 看到 4 → 记：`[3,4]`；
+     - 看到 2 → 记：`[3,4,2]`；
+     - 看到 * → 算 4*2=8，替换 4、2：`[3,8]`；
+     - 看到 + → 算 3+8=11，替换 3、8：`[11]`；
+     - 看到 1 → 记：`[11,1]`；
+     - 看到 - → 算 11-1=10，替换 11、1：`[10]`；
+     - 结果：10。
+
+     👉 核心：后缀表达式的运算符，永远作用于「最近的两个数字」—— 不用想优先级，不用想括号，这就是计算机喜欢的方式。
+
+   - 第三步：程序实现
+
+   程序实现分两大块，我们还是拆成 “人话步骤 + 代码”：
+
+   **第一块：中缀转后缀（用「字符栈」存运算符）**
+
+   栈的作用：模拟人类 “存运算符” 的过程，利用「优先级」决定什么时候弹出运算符。
+
+   核心规则（程序版）：
+
+   | 遇到的字符 | 程序操作                                                     |
+   | ---------- | ------------------------------------------------------------ |
+   | 数字       | 直接写入后缀字符串（多位数要拼起来）                         |
+   | (          | 入栈                                                         |
+   | )          | 弹出栈顶运算符到后缀，直到遇到 (（(弹出不写）                |
+   | +-*/       | 若栈顶运算符优先级 ≥ 当前运算符 → 弹出栈顶到后缀；重复此操作，直到栈顶优先级 < 当前 → 当前运算符入栈 |
+   | 遍历结束   | 弹出栈中所有运算符到后缀                                     |
+
+   代码步骤拆解（以 `3+4*2-1` 为例）：
+
+   ```c
+   // 先定义运算符优先级（越先算，优先级越高）
+   int GetOpPriority(char op) {
+       switch(op) {
+           case '#': return 0; // 栈底标记，优先级最低
+           case '(': return 1;
+           case '+': case '-': return 2;
+           case '*': case '/': return 3;
+           default: return -1;
+       }
+   }
+   
+   void InfixToPostfix(const char *infix, char *postfix) {
+       CharSqStack opStack; // 存运算符的栈
+       InitCharStack(&opStack);
+       PushCharStack(&opStack, '#'); // 栈底放#，防止空栈
+       
+       int i=0, j=0;
+       char op, topOp;
+       while (infix[i] != '\0') {
+           // 情况1：数字（支持多位数）→ 直接写
+           if (isdigit(infix[i])) {
+               while (isdigit(infix[i])) {
+                   postfix[j++] = infix[i++];
+               }
+               postfix[j++] = ' '; // 空格分隔数字，方便后续算
+           }
+           // 情况2：左括号 → 入栈
+           else if (infix[i] == '(') {
+               PushCharStack(&opStack, infix[i]);
+               i++;
+           }
+           // 情况3：右括号 → 弹到左括号
+           else if (infix[i] == ')') {
+               topOp = GetTopChar(opStack);
+               while (topOp != '(') {
+                   PopCharStack(&opStack, &op);
+                   postfix[j++] = op;
+                   postfix[j++] = ' ';
+                   topOp = GetTopChar(opStack);
+               }
+               PopCharStack(&opStack, &op); // 弹出(，不写
+               i++;
+           }
+           // 情况4：运算符 → 按优先级处理
+           else if (infix[i] == '+' || infix[i] == '-' || infix[i] == '*' || infix[i] == '/') {
+               topOp = GetTopChar(opStack);
+               // 栈顶优先级≥当前 → 弹出
+               while (GetOpPriority(infix[i]) <= GetOpPriority(topOp)) {
+                   PopCharStack(&opStack, &op);
+                   postfix[j++] = op;
+                   postfix[j++] = ' ';
+                   topOp = GetTopChar(opStack);
+               }
+               PushCharStack(&opStack, infix[i]); // 当前运算符入栈
+               i++;
+           }
+           else { i++; } // 跳过空格等无效字符
+       }
+       // 最后弹出所有运算符
+       topOp = GetTopChar(opStack);
+       while (topOp != '#') {
+           PopCharStack(&opStack, &op);
+           postfix[j++] = op;
+           postfix[j++] = ' ';
+           topOp = GetTopChar(opStack);
+       }
+       postfix[j-1] = '\0'; // 去掉最后一个空格
+       DestroyCharStack(&opStack);
+   }
+   ```
+
+   **第二块：后缀表达式求值（用「整数栈」存数字）**
+
+   栈的作用：模拟人类 “记数字” 的过程，遇到运算符就弹出最近两个数字计算。
+
+   核心规则（程序版）：
+
+   | 遇到的字符 | 程序操作                                                     |
+   | ---------- | ------------------------------------------------------------ |
+   | 数字       | 转成整数入栈                                                 |
+   | 运算符     | 弹出栈顶两个数（后弹的是右数，先弹的是左数），计算后结果入栈 |
+   | 遍历结束   | 栈顶就是结果                                                 |
+
+   代码步骤拆解：
+
+   ```c
+   int PostfixEval(const char *postfix) {
+       IntSqStack numStack; // 存数字的栈
+       InitIntStack(&numStack);
+       
+       int i=0, num=0, a, b;
+       while (postfix[i] != '\0') {
+           // 情况1：数字 → 转整数入栈
+           if (isdigit(postfix[i])) {
+               num = 0;
+               while (isdigit(postfix[i])) {
+                   num = num*10 + (postfix[i]-'0'); // 多位数拼接
+                   i++;
+               }
+               PushIntStack(&numStack, num);
+           }
+           // 情况2：空格 → 跳过
+           else if (postfix[i] == ' ') {
+               i++;
+           }
+           // 情况3：运算符 → 算完入栈
+           else {
+               // 弹出两个数：b是右数，a是左数（比如a - b）
+               PopIntStack(&numStack, &b);
+               PopIntStack(&numStack, &a);
+               switch (postfix[i]) {
+                   case '+': PushIntStack(&numStack, a+b); break;
+                   case '-': PushIntStack(&numStack, a-b); break;
+                   case '*': PushIntStack(&numStack, a*b); break;
+                   case '/': PushIntStack(&numStack, a/b); break;
+               }
+               i++;
+           }
+       }
+       // 栈顶就是结果
+       PopIntStack(&numStack, &num);
+       DestroyIntStack(&numStack);
+       return num;
+   }
+   ```
+
+   - 第四步：用 `3+4*2-1` 走一遍完整程序逻辑（彻底吃透）
+
+   中缀转后缀：
+
+   ```plaintext
+   infix = "3+4*2-1"
+   opStack 初始：[#]
+   i=0：'3' → 写postfix："3 "，j=2
+   i=1：'+' → 栈顶#优先级0 < +的2 → 入栈 → opStack：[#, +]，i=2
+   i=2：'4' → 写postfix："3 4 "，j=4
+   i=3：'*' → 栈顶+优先级2 < *的3 → 入栈 → opStack：[#, +, *]，i=4
+   i=4：'2' → 写postfix："3 4 2 "，j=6
+   i=5：'-' → 栈顶*优先级3 ≥ -的2 → 弹出*，写postfix："3 4 2 * "；
+          栈顶+优先级2 ≥ -的2 → 弹出+，写postfix："3 4 2 * + "；
+          栈顶#优先级0 < -的2 → 入栈 → opStack：[#, -]，i=6
+   i=6：'1' → 写postfix："3 4 2 * + 1 "，j=10
+   遍历结束 → 弹出-，写postfix："3 4 2 * + 1 -"
+   最终postfix："3 4 2 * + 1 -"
+   ```
+
+   后缀求值：
+
+   ```plaintext
+   postfix = "3 4 2 * + 1 -"
+   numStack 初始：空
+   i=0：'3' → 入栈 → [3]，i=2
+   i=2：'4' → 入栈 → [3,4]，i=4
+   i=4：'2' → 入栈 → [3,4,2]，i=6
+   i=6：'*' → 弹2（b）、弹4（a）→ 4*2=8 → 入栈 → [3,8]，i=8
+   i=8：'+' → 弹8（b）、弹3（a）→ 3+8=11 → 入栈 → [11]，i=10
+   i=10：'1' → 入栈 → [11,1]，i=12
+   i=12：'-' → 弹1（b）、弹11（a）→ 11-1=10 → 入栈 → [10]
+   最终弹出10 → 结果=10
+   ```
+
+   - 第五步：核心易错点（期末必考）
+
+   1. **多位数处理**：不能只读单个字符，要循环拼接（比如`123`要拼成 123，不是 1、2、3）；
+   2. **运算符优先级**：乘除（3）> 加减（2）> 左括号（1）> #（0）；
+   3. **后缀求值的数字顺序**：先弹的是左数，后弹的是右数（比如`a - b`，不是`b - a`）；
+   4. **括号处理**：右括号要弹到左括号，左括号不写入后缀。
+
+
 
 
 
