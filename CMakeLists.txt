@@ -66,6 +66,9 @@ add_executable(project_review_ComprehensiveApplicationOfStacks
         proj_Rev_ComaStack/main.c
 )
 
+add_executable(project_review_SqQueue
+        ProRevSqQueue/main.c
+)
 
 # 确保C编译器以UTF-8处理源码
 if(CMAKE_C_COMPILER_ID MATCHES "GNU")
