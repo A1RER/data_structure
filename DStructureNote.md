@@ -4024,64 +4024,86 @@ int main()
    #include <string.h>
    #include <ctype.h>
    
-   //字符栈：存储运算符
+   // 定义栈的最大容量（原代码遗漏，补充）
+   #define MAX_STACK_SIZE 100
+   
+   // ---------------- 数据结构定义 ----------------
+   // 字符栈：专门存储运算符（+、-、*、/、() 等）
    typedef struct {
-       char *base;
-       char *top;
-       int stacksize;
+       char *base;       // 栈底指针：指向栈的起始位置
+       char *top;        // 栈顶指针：指向栈顶元素的下一个位置
+       int stacksize;    // 栈的总容量
    } CharSqStack;
    
-   //整数栈；存储操作数
+   // 整数栈：专门存储操作数（如 3、12、100 等）
    typedef struct {
-       int *base;
-       int *top;
-       int stacksize;
+       int *base;        // 栈底指针
+       int *top;         // 栈顶指针
+       int stacksize;    // 栈总容量
    } IntSqStack;
    
-   // ---------------- 字符栈操作 ----------------
+   // ---------------- 字符栈（运算符栈）操作函数 ----------------
+   // 初始化字符栈
+   // 参数：stack - 待初始化的字符栈指针
+   // 返回：0-成功，-1-失败（内存分配失败）
    int InitCharStack(CharSqStack *stack) {
+       // 为栈分配连续内存，大小为 MAX_STACK_SIZE 个字符
        stack->base = (char *)malloc(MAX_STACK_SIZE * sizeof(char));
-       if (stack->base == NULL) {
-           perror("malloc failed");
+       if (stack->base == NULL) { // 内存分配失败判断（易错点）
+           perror("malloc failed"); // 打印具体错误原因
            return -1;
        }
-       stack->top = stack->base;
-       stack->stacksize = MAX_STACK_SIZE;
+       stack->top = stack->base;   // 栈空时，栈顶=栈底
+       stack->stacksize = MAX_STACK_SIZE; // 记录栈容量
        return 0;
    }
    
+   // 字符栈入栈操作
+   // 参数：stack - 字符栈指针；data - 要入栈的运算符（如 '+'、'('）
+   // 返回：0-成功，-1-失败（栈满）
    int PushCharStack(CharSqStack *stack, char data) {
+       // 栈满判断：栈顶-栈底 >= 总容量（指针相减得到元素个数）
        if (stack->top - stack->base >= MAX_STACK_SIZE) {
            printf("运算符栈满！\n");
            return -1;
        }
-       *(stack->top++) = data;
+       *(stack->top++) = data; // 先赋值给栈顶位置，再让栈顶指针后移（核心操作）
        return 0;
    }
    
+   // 字符栈出栈操作
+   // 参数：stack - 字符栈指针；data - 输出型参数，接收弹出的运算符
+   // 返回：0-成功，-1-失败（栈空）
    int PopCharStack(CharSqStack *stack, char *data) {
-       if (stack->top == stack->base) {
+       if (stack->top == stack->base) { // 栈空判断
            printf("运算符栈空！\n");
            return -1;
        }
-       *data = *(--stack->top);
+       *data = *(--stack->top); // 先让栈顶指针前移，再取值（核心操作）
        return 0;
    }
    
+   // 获取字符栈栈顶元素（不出栈）
+   // 参数：stack - 字符栈（值传递，不修改原栈）
+   // 返回：栈顶运算符；栈空返回 '#'（自定义栈空标记）
    char GetTopChar(CharSqStack stack) {
        if (stack.top == stack.base) {
-           return '#'; // 栈空标记
+           return '#'; // 用 '#' 标记栈空，避免后续优先级判断出错
        }
-       return *(stack.top - 1);
+       return *(stack.top - 1); // 栈顶指针前一位是栈顶元素
    }
    
+   // 销毁字符栈（释放内存，避免内存泄漏）
    void DestroyCharStack(CharSqStack *stack) {
-       free(stack->base);
-       stack->base = NULL;
+       free(stack->base); // 释放栈的内存空间
+       stack->base = NULL; // 指针置空，避免野指针（易错点）
        stack->top = NULL;
    }
    
-   // ---------------- 整数栈操作 ----------------
+   // ---------------- 整数栈（操作数栈）操作函数 ----------------
+   // 初始化整数栈
+   // 参数：stack - 待初始化的整数栈指针
+   // 返回：0-成功，-1-失败（内存分配失败）
    int InitIntStack(IntSqStack *stack) {
        stack->base = (int *)malloc(MAX_STACK_SIZE * sizeof(int));
        if (stack->base == NULL) {
@@ -4093,24 +4115,31 @@ int main()
        return 0;
    }
    
+   // 整数栈入栈操作
+   // 参数：stack - 整数栈指针；data - 要入栈的操作数（如 3、12）
+   // 返回：0-成功，-1-失败（栈满）
    int PushIntStack(IntSqStack *stack, int data) {
        if (stack->top - stack->base >= MAX_STACK_SIZE) {
            printf("操作数栈满！\n");
            return -1;
        }
-       *(stack->top++) = data;
+       *(stack->top++) = data; // 同字符栈入栈逻辑
        return 0;
    }
    
+   // 整数栈出栈操作
+   // 参数：stack - 整数栈指针；data - 输出型参数，接收弹出的操作数
+   // 返回：0-成功，-1-失败（栈空）
    int PopIntStack(IntSqStack *stack, int *data) {
        if (stack->top == stack->base) {
            printf("操作数栈空！\n");
            return -1;
        }
-       *data = *(--stack->top);
+       *data = *(--stack->top); // 同字符栈出栈逻辑
        return 0;
    }
    
+   // 销毁整数栈（释放内存）
    void DestroyIntStack(IntSqStack *stack) {
        free(stack->base);
        stack->base = NULL;
@@ -4118,43 +4147,178 @@ int main()
    }
    
    /**********************************************
-   * 表达式求值--核心功能
+   * 表达式求值核心功能（中缀转后缀 + 后缀求值）
    ***********************************************/
    
-   //获取运算符优先级
+   // 获取运算符优先级（核心辅助函数）
+   // 参数：op - 运算符（+、-、*、/、(、# 等）
+   // 返回：优先级数值（数值越大优先级越高）；非法运算符返回-1
    int GetOpPriorty(char op){
-       swtich(op){
-           case'#':return 0;
-           case '(': return 1;
-           case '+': case '-': return 2;
-           case '*': case '/': return 3;
-           default: return -1;
+       switch(op){ // 原代码拼写错误 swtich → switch（已修正）
+           case '#': return 0;    // 栈底标记，优先级最低
+           case '(': return 1;    // 左括号优先级低，需特殊处理
+           case '+': case '-': return 2; // 加减优先级次之
+           case '*': case '/': return 3; // 乘除优先级最高
+           default: return -1;    // 非法运算符（如字母、符号）
        }
    }
    
-   //中缀表达式转后缀表达式
+   // 中缀表达式转后缀表达式（核心函数1）
+   // 参数：infix - 输入的中缀表达式（如 "3+4*2-1"）；postfix - 输出的后缀表达式（如 "3 4 2 * + 1 -"）
+   // 核心规则：数字直接输出；运算符按优先级入栈/出栈；括号特殊处理
    void InfixToPostfix(const char *infix,char *postfix){
-       CharSqStack opStack;
-       InitCharStack(&opStack);
-       PushCharStack(&opStack, '#'); // 栈底标记
+       CharSqStack opStack;       // 定义运算符栈
+       InitCharStack(&opStack);   // 初始化栈
+       PushCharStack(&opStack, '#'); // 栈底压入 '#'，作为结束标记
        
-       int i=0,j=0;
-       char op,topOp;
-       while(infix[i]!='\0'){
-           //数字直接写入（支持多位数）
-           if(isdigit(infix[i])){
-               while(isdigit(infix[i])){
-                   postfix[j++]=infix[i++];
+       int i=0,j=0;               // i：中缀表达式遍历指针；j：后缀表达式写入指针
+       char op,topOp;             // op：临时存储弹出的运算符；topOp：栈顶运算符
+       while(infix[i]!='\0'){     // 遍历中缀表达式直到结束
+           // 场景1：遇到数字（支持多位数，如 12、100）
+           if(isdigit(infix[i])){ // isdigit：判断字符是否为数字（<ctype.h>库函数）
+               while(isdigit(infix[i])){ // 循环读取多位数的每一位
+                   postfix[j++]=infix[i++]; // 数字直接写入后缀表达式
                }
-               postfix[j++]=' ';	//空格分隔操作数
+               postfix[j++]=' ';  // 用空格分隔操作数（避免多位数混淆，如 12和3 写成 123）
            }
-           //左括号入栈
+           // 场景2：遇到左括号 '(' → 直接入栈（左括号需等待右括号触发出栈）
            else if(infix[i]=='('){
                PushCharStack(&opStack,infix[i]);
+               i++; // 遍历指针后移
+           }
+           // 场景3：遇到右括号 ')' → 弹出运算符直到左括号
+           else if(infix[i]==')'){
+               topOp=GetTopChar(opStack); // 获取栈顶运算符
+               while (topOp != '(') {    // 未遇到左括号则循环
+                   PopCharStack(&opStack, &op); // 弹出运算符
+                   postfix[j++] = op;           // 运算符写入后缀表达式
+                   postfix[j++] = ' ';          // 空格分隔
+                   topOp = GetTopChar(opStack); // 重新获取栈顶
+               }
+               PopCharStack(&opStack, &op); // 弹出左括号（不写入后缀表达式）
+               i++; // 跳过右括号
+           }
+           // 场景4：遇到运算符（+、-、*、/）→ 按优先级处理
+           else if (infix[i] == '+' || infix[i] == '-' || infix[i] == '*' || infix[i] == '/') {
+               topOp = GetTopChar(opStack); // 获取栈顶运算符
+               // 规则：当前运算符优先级 ≤ 栈顶运算符 → 弹出栈顶运算符并写入后缀表达式
+               while (GetOpPriority(infix[i]) <= GetOpPriority(topOp)) {
+                   PopCharStack(&opStack, &op);
+                   postfix[j++] = op;
+                   postfix[j++] = ' ';
+                   topOp = GetTopChar(opStack); // 更新栈顶
+               }
+               PushCharStack(&opStack, infix[i]); // 当前运算符入栈
+               i++; // 遍历指针后移
+           }
+           // 场景5：遇到空格/无效字符 → 直接跳过（增强鲁棒性）
+           else {
                i++;
            }
-           //右括号：弹出运算符直到左括号
        }
+       
+       // 遍历结束：弹出栈中剩余的运算符（直到栈底标记 '#'）
+       topOp = GetTopChar(opStack);
+       while (topOp != '#') {
+           PopCharStack(&opStack, &op);
+           postfix[j++] = op;
+           postfix[j++] = ' ';
+           topOp = GetTopChar(opStack);
+       }
+   
+       if (j > 0) postfix[j-1] = '\0'; // 去掉最后一个多余的空格（避免后缀表达式末尾有空格）
+       DestroyCharStack(&opStack);     // 销毁栈，释放内存
+   }
+   
+   // 后缀表达式求值（核心函数2）
+   // 参数：postfix - 输入的后缀表达式（如 "3 4 2 * + 1 -"）
+   // 返回：表达式计算结果；出错返回-1（除数为0/表达式非法）
+   int PostfixEval(const char *postfix) {
+       IntSqStack numStack;       // 定义操作数栈
+       InitIntStack(&numStack);   // 初始化栈
+   
+       int i = 0, num = 0, a, b;  // i：后缀表达式遍历指针；num：临时存储多位数；a/b：存储弹出的操作数
+       while (postfix[i] != '\0') { // 遍历后缀表达式直到结束
+           // 场景1：遇到数字 → 解析多位数并入栈
+           if (isdigit(postfix[i])) {
+               num = 0; // 多位数初始化为0
+               while (isdigit(postfix[i])) { // 解析多位数（如 "123" → 1*100+2*10+3=123）
+                   num = num * 10 + (postfix[i] - '0'); // 字符转数字（'0'的ASCII码是48，减去后得到数值）
+                   i++;
+               }
+               PushIntStack(&numStack, num); // 解析后的数字入栈
+           }
+           // 场景2：遇到空格 → 跳过（分隔符）
+           else if (postfix[i] == ' ') {
+               i++;
+           }
+           // 场景3：遇到运算符 → 弹出两个操作数计算，结果入栈
+           else {
+               // 弹出操作数：先弹出的是右操作数b，后弹出的是左操作数a（易错点！）
+               if (PopIntStack(&numStack, &b) != 0 || PopIntStack(&numStack, &a) != 0) {
+                   printf("表达式非法！\n");
+                   DestroyIntStack(&numStack);
+                   return -1;
+               }
+               // 根据运算符计算
+               switch (postfix[i]) {
+                   case '+': PushIntStack(&numStack, a + b); break; // a+b结果入栈
+                   case '-': PushIntStack(&numStack, a - b); break; // a-b（注意顺序，不能反）
+                   case '*': PushIntStack(&numStack, a * b); break; // a*b
+                   case '/':
+                       if (b == 0) { // 除数为0判断（核心易错点）
+                           printf("除数不能为0！\n");
+                           DestroyIntStack(&numStack);
+                           return -1;
+                       }
+                       PushIntStack(&numStack, a / b); // a/b（整数除法）
+                       break;
+                   default:
+                       printf("非法运算符：%c\n", postfix[i]);
+                       DestroyIntStack(&numStack);
+                       return -1;
+               }
+               i++; // 遍历指针后移
+           }
+       }
+   
+       PopIntStack(&numStack, &num); // 弹出最终计算结果
+       DestroyIntStack(&numStack);   // 销毁栈
+       return num;
+   }
+   
+   // 测试模块：验证中缀转后缀+求值功能
+   int main() {
+       printf("========== 表达式求值测试 ==========\n");
+       // 测试用例数组：包含常规表达式、括号、多位数、混合运算
+       const char *infixCases[] = {
+           "3+4*2-1",      // 常规表达式 → 后缀：3 4 2 * + 1 - → 结果10
+           "(3+4)*2-1",    // 含括号 → 后缀：3 4 + 2 * 1 - → 结果13
+           "12+3*4-5",     // 多位数 → 后缀：12 3 4 * + 5 - → 结果19
+           "100/2+5*8",    // 混合运算 → 后缀：100 2 / 5 8 * + → 结果90
+           NULL            // 用NULL标记测试用例结束
+       };
+   
+       char postfix[200]; // 存储转换后的后缀表达式
+       for (int i = 0; infixCases[i] != NULL; i++) {
+           memset(postfix, 0, sizeof(postfix)); // 每次清空后缀表达式数组（避免残留）
+           InfixToPostfix(infixCases[i], postfix); // 中缀转后缀
+           int res = PostfixEval(postfix);         // 后缀表达式求值
+           // 打印结果
+           printf("中缀表达式：%s\n", infixCases[i]);
+           printf("后缀表达式：%s\n", postfix);
+           printf("计算结果：%d\n\n", res);
+       }
+   
+       // 测试特殊场景：除数为0
+       memset(postfix, 0, sizeof(postfix));
+       InfixToPostfix("10/0+5", postfix);
+       printf("中缀表达式：10/0+5\n");
+       printf("后缀表达式：%s\n", postfix);
+       int res = PostfixEval(postfix);
+       printf("计算结果：%d（除数为0，出错）\n", res);
+   
+       return 0;
    }
    ```
 
@@ -4408,7 +4572,245 @@ int main()
    3. **后缀求值的数字顺序**：先弹的是左数，后弹的是右数（比如`a - b`，不是`b - a`）；
    4. **括号处理**：右括号要弹到左括号，左括号不写入后缀。
 
+# 队列
 
+## 1.核心定义
 
+| 术语         | 定义                                                         |
+| ------------ | ------------------------------------------------------------ |
+| 队列         | 限定仅在队尾（rear）插入、队头（front）删除的线性表，遵循**先进先出（FIFO）** 原则 |
+| 普通顺序队列 | 用数组实现，入队`rear++`、出队`front++`，易出现 “假溢出”（数组未满但无法入队） |
+| 循环队列     | 将数组首尾相连，通过取余运算实现 “循环”，解决普通队列的假溢出问题 |
 
+## 2.关于循环队列
 
+### 1.首先需要说的问题
+
+我们需要先明确的是，为什么会有循环队列？
+
+普通顺序队列出队后，front指针会后移，前面的空间就无法复用了（比如说数组大小是5，入队4个元素后出队1个，此时front=1、rear=4，看似有1个空位，但rear已经到了数组的末尾，无法继续入队，就会假溢出。）
+
+### 2.循环队列的核心设计
+
+- 数组首尾相连，通过`%MAXSIZE`让指针“绕回”数组开头的地方
+- 留一个空位区分空/满，避免`front==rear`同时表示“空”和“满”（见数据结构严蔚敏教材p63）
+
+### 3. 核心公式
+
+| 操作     | 公式                            | 说明                   |
+| -------- | ------------------------------- | ---------------------- |
+| 判空     | `front == rear`                 | 队头 / 队尾指针重合    |
+| 判满     | `(rear + 1) % MAXSIZE == front` | 队尾指针的下一位是队头 |
+| 入队后移 | `rear = (rear + 1) % MAXSIZE`   | 循环后移队尾指针       |
+| 出队后移 | `front = (front + 1) % MAXSIZE` | 循环后移队头指针       |
+
+### 4.完整示例代码
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+// 定义队列最大容量（根据需求调整）
+#define MAXSIZE 5
+// 状态码定义
+#define SUCCESS 1
+#define FAILURE 0
+
+// 循环队列结构体（顺序存储）
+typedef struct {
+    int data[MAXSIZE];  // 存储队列元素的数组
+    int front;          // 队头指针：指向队头元素
+    int rear;           // 队尾指针：指向队尾元素的下一个位置
+} SqQueue;
+
+// 1. 初始化队列
+// 逻辑：队头/队尾指针都置0，队列初始为空
+int InitQueue(SqQueue *q) {
+    if (q == NULL) return FAILURE; // 防空指针（易错点1）
+    q->front = 0;
+    q->rear = 0;
+    return SUCCESS;
+}
+
+// 2. 判断队列是否为空
+int IsEmpty(SqQueue *q) {
+    if (q == NULL) return FAILURE;
+    return (q->front == q->rear) ? SUCCESS : FAILURE;
+}
+
+// 3. 判断队列是否为满
+int IsFull(SqQueue *q) {
+    if (q == NULL) return FAILURE;
+    return ((q->rear + 1) % MAXSIZE == q->front) ? SUCCESS : FAILURE;
+}
+
+// 4. 入队操作（队尾插入）
+// 逻辑：先判满→存入数据→队尾指针循环后移
+int EnQueue(SqQueue *q, int val) {
+    if (q == NULL || IsFull(q) == SUCCESS) {
+        printf("队列已满，无法入队！\n");
+        return FAILURE;
+    }
+    q->data[q->rear] = val;                // 存入数据到队尾位置
+    q->rear = (q->rear + 1) % MAXSIZE;     // 队尾指针循环后移（核心）
+    return SUCCESS;
+}
+
+// 5. 出队操作（队头删除）
+// 逻辑：先判空→取出队头数据→队头指针循环后移
+int DeQueue(SqQueue *q, int *val) {
+    if (q == NULL || IsEmpty(q) == SUCCESS || val == NULL) {
+        printf("队列为空/参数错误，无法出队！\n");
+        return FAILURE;
+    }
+    *val = q->data[q->front];              // 取出队头数据
+    q->front = (q->front + 1) % MAXSIZE;   // 队头指针循环后移（核心）
+    return SUCCESS;
+}
+
+// 6. 遍历队列
+// 逻辑：从front开始，循环遍历到rear前
+void TraverseQueue(SqQueue *q) {
+    if (q == NULL || IsEmpty(q) == SUCCESS) {
+        printf("队列为空！\n");
+        return;
+    }
+    printf("队列元素（队头→队尾）：");
+    int i = q->front;
+    while (i != q->rear) {
+        printf("%d ", q->data[i]);
+        i = (i + 1) % MAXSIZE; // 循环遍历
+    }
+    printf("\n");
+}
+
+// 7. 求队列长度
+// 核心公式：(rear - front + MAXSIZE) % MAXSIZE（期末必考）
+int GetQueueLength(SqQueue *q) {
+    if (q == NULL) return -1;
+    return (q->rear - q->front + MAXSIZE) % MAXSIZE;
+}
+
+// 测试主函数
+int main() {
+    SqQueue q;
+    // 初始化队列
+    if (InitQueue(&q) == SUCCESS) {
+        printf("队列初始化成功！\n");
+    }
+
+    // 入队测试：10、20、30、40（MAXSIZE=5，最多存4个）
+    EnQueue(&q, 10);
+    EnQueue(&q, 20);
+    EnQueue(&q, 30);
+    EnQueue(&q, 40);
+    TraverseQueue(&q); // 输出：10 20 30 40
+    printf("当前队列长度：%d\n", GetQueueLength(&q)); // 输出：4
+
+    // 尝试入队满
+    EnQueue(&q, 50); // 提示：队列已满
+
+    // 出队测试
+    int val;
+    DeQueue(&q, &val);
+    printf("出队元素：%d\n", val); // 输出：10
+    TraverseQueue(&q); // 输出：20 30 40
+    printf("当前队列长度：%d\n", GetQueueLength(&q)); // 输出：3
+
+    // 循环入队测试（验证循环逻辑）
+    EnQueue(&q, 50);
+    TraverseQueue(&q); // 输出：20 30 40 50
+    printf("当前队列长度：%d\n", GetQueueLength(&q)); // 输出：4
+
+    return 0;
+}
+```
+
+易错辨析：
+
+| 易错点                     | 错误表现                          | 正确做法                                     |
+| -------------------------- | --------------------------------- | -------------------------------------------- |
+| 判满用`rear == MAXSIZE`    | 出现假溢出，数组有空位但无法入队  | 用`(rear + 1) % MAXSIZE == front`判满        |
+| 入队 / 出队忘记取余        | 指针越界，程序崩溃 / 数据错误     | 指针后移必须加`% MAXSIZE`                    |
+| 初始化时 front/rear 不置 0 | 队列初始状态混乱，判空 / 判满错误 | 初始化必须`front = rear = 0`                 |
+| 无向图思维套用到队列       | 认为 rear 可以向前移              | 队列只能队尾入、队头出，指针单向后移（循环） |
+| 忽略空指针判断             | 传入 NULL 指针时程序崩溃          | 所有函数开头先判断`q == NULL`                |
+
+`% MAXSIZE` 是循环队列实现 “循环” 的核心，我用**最通俗的比喻 + 分步拆解**，帮你彻底搞懂 —— 其实本质就是 “让指针绕着数组转圈”。
+
+先看一个「不用 %」的反例（为什么会出问题）
+
+假设循环队列的 `MAXSIZE=5`（数组下标 0~4），我们先看不用`%`的情况：
+
+1. 初始状态：`front=0，rear=0`（空队列）；
+2. 入队 4 个元素：`rear` 依次变成 1→2→3→4（此时数组存满 4 个元素，留 1 个空位判满）；
+3. 出队 1 个元素：`front` 变成 1；
+4. 想再入队 1 个元素：如果不用`%`，`rear++` 会变成 5—— 但数组下标最大是 4，`rear=5` 就超出数组范围了（指针越界），这就是 “假溢出”（数组明明有 1 个空位，却没法用）。
+
+用「生活比喻」理解 % MAXSIZE
+
+把数组想象成一个**环形跑道**，跑道总长度是`MAXSIZE=5`（对应下标 0~4）：
+
+- `rear` 是 “跑步的人”，每次入队就往前跑 1 步；
+- `% MAXSIZE` 是 “跑道的终点线”—— 跑到 4（最后 1 格）后，再跑 1 步，不是到 5，而是回到 0（跑道起点）；
+- 核心：`% MAXSIZE` 的作用是**让数值 “绕回” 到 0~MAXSIZE-1 的范围内**，不会超出数组下标。
+
+数学层面：% MAXSIZE 到底在算什么？
+
+`%` 是「取余运算符」，计算规则是：`a % b = a - b × 商`（商是不大于 a/b 的最大整数）。对循环队列来说，`MAXSIZE` 是数组长度，指针（front/rear）的取值范围必须是 `0 ~ MAXSIZE-1`，`% MAXSIZE` 刚好能把超出的指针 “拉回” 这个范围：
+
+| 指针当前值 | MAXSIZE=5 | 计算过程 | 结果（新指针值） | 实际意义     |
+| ---------- | --------- | -------- | ---------------- | ------------ |
+| 4          | 5         | 4%5=4    | 4                | 正常下标     |
+| 5          | 5         | 5%5=0    | 0                | 绕回数组开头 |
+| 6          | 5         | 6%5=1    | 1                | 继续往后走   |
+| 7          | 5         | 7%5=2    | 2                | 继续往后走   |
+
+结合循环队列的实际操作拆解
+
+还是以 `MAXSIZE=5` 为例，看`rear`指针的循环过程：
+
+步骤 1：初始状态
+
+`front=0，rear=0`，队列空。
+
+步骤 2：入队 4 个元素（10、20、30、40）
+
+- 入队 10：`rear = (0+1)%5=1` → `rear=1`；
+
+- 入队 20：`rear = (1+1)%5=2` → `rear=2`；
+
+- 入队 30：`rear = (2+1)%5=3` → `rear=3`；
+
+- 入队 40：`rear = (3+1)%5=4` → `rear=4`；
+
+  此时队列满
+
+  ```
+  (4+1)%5=0 == front=0
+  ```
+
+  无法再入队
+
+步骤 3：出队 1 个元素（10）
+
+`front = (0+1)%5=1` → `front=1`，队列空位出现。
+
+步骤 4：再入队 1 个元素（50）
+
+`rear = (4+1)%5=0` → `rear=0`（关键！不用 % 的话 rear 会变成 5，越界；用 % 直接绕回 0）；此时数组下标 0 被利用，实现了 “循环复用” 空出的位置。
+
+步骤 5：遍历验证
+
+从`front=1`开始，遍历到`rear=0`：
+
+- i=1 → 输出 20；
+- i=2 → 输出 30；
+- i=3 → 输出 40；
+- i=4 → 输出无（已到数组末尾）；
+- i=(4+1)%5=0 → 输出 50；
+- 此时 i=0 == rear=0，遍历结束。
+
+核心结论（一句话记住）
+
+`% MAXSIZE` 的唯一作用：**让 front/rear 指针在 0~MAXSIZE-1 的范围内循环，不会超出数组下标，从而复用普通队列空出的前半部分空间，解决假溢出问题**。
