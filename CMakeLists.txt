@@ -74,6 +74,14 @@ add_executable(project_review_BiTree
         proj_bitree/main.c
 )
 
+add_executable(project_FindAndSort
+        Proj251225F_S/main.c
+)
+
+add_executable(project_HashTable
+        projHash/main.c
+)
+
 # 确保C编译器以UTF-8处理源码
 if(CMAKE_C_COMPILER_ID MATCHES "GNU")
     add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)
