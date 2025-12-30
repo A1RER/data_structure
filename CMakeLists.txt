@@ -82,6 +82,10 @@ add_executable(project_HashTable
         projHash/main.c
 )
 
+add_executable(project_HaffmanTreeReview
+        projHafftree/main.c
+)
+
 # 确保C编译器以UTF-8处理源码
 if(CMAKE_C_COMPILER_ID MATCHES "GNU")
     add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)
